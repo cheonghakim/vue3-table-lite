@@ -22,9 +22,10 @@
     "serve": "vue-cli-service serve",
     "build": "vue-cli-service build",
     "lint": "vue-cli-service lint",
-    "deploy-file": "vue-cli-service build  --target=lib 'src/index.ts'"
+    "deploy-file": "vue-cli-service build  --target=lib '/src/index.ts'"
   },
   "dependencies": {
+    "core-js": "^3.8.3",
     "vue": "^3.0.0"
   },
   "devDependencies": {
@@ -49,14 +50,15 @@
       "eslint:recommended"
     ],
     "parserOptions": {
-      "parser": "babel-eslint"
+      "parser": "@babel/eslint-parser"
     },
     "rules": {}
   },
   "browserslist": [
     "> 1%",
     "last 2 versions",
-    "not dead"
+     "not dead",
+    "not ie 11"
   ],
   "main": "./index.js",
   "types": "./ts.d.ts"
