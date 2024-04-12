@@ -24,10 +24,10 @@
             <thead class="vtl-thead">
               <tr class="vtl-thead-tr">
                 <th v-if="hasCheckbox" class="vtl-thead-th vtl-checkbox-th">
-                  <div>
+                  <div :class="`${checkboxWrapperClass}`">
                     <input
                       type="checkbox"
-                      class="vtl-thead-checkbox"
+                      class="vtl-thead-checkbox form-check-input cursor-pointer"
                       :indeterminate="setting.isIndeterminate"
                       v-model="setting.isCheckAll"
                     />
@@ -130,17 +130,17 @@
                     @click="$emit('row-clicked', row)"
                   >
                     <td v-if="hasCheckbox" class="vtl-tbody-td">
-                      <div :class="{ [checkboxWrapperClass]: true }">
+                      <div :class="`${checkboxWrapperClass}`">
                         <input
                           type="checkbox"
-                          class="vtl-tbody-checkbox"
-                          :class="{ [checkboxClass]: true }"
+                          class="vtl-tbody-checkbox form-check-input cursor-pointer"
                           :ref="
                             (el: any) => {
                               (rowCheckbox as Array<HTMLElement>).push(el);
                             }
                           "
                           :value="row[setting.keyColumn]"
+                          :disabled="row.disabled"
                           @click="checked(row, $event)"
                         />
                       </div>
@@ -230,12 +230,13 @@
                     @click="$emit('row-clicked', row)"
                   >
                     <td v-if="hasCheckbox" class="vtl-tbody-td">
-                      <div>
+                      <div :class="`${checkboxWrapperClass}`">
                         <input
                           type="checkbox"
-                          class="vtl-tbody-checkbox"
+                          class="vtl-tbody-checkbox form-check-input cursor-pointer"
                           :ref="(el: any) => (rowCheckbox as Array<HTMLElement>).push(el)"
                           :value="row[setting.keyColumn]"
+                          :disabled="row.disabled"
                           @click="checked(row, $event)"
                         />
                       </div>
@@ -613,13 +614,9 @@ export default defineComponent({
       type: Boolean,
       default: false,
     },
-    checkboxClass: {
-      type: String,
-      default: "form-check-input",
-    },
     checkboxWrapperClass: {
       type: String,
-      default: "form-check-info",
+      default: "form-check form-check-info",
     },
   },
   setup(props, { emit, slots }) {
@@ -799,15 +796,23 @@ export default defineComponent({
               ? props.rows.slice(setting.offset - 1, setting.limit)
               : props.rows;
             if (props.checkedReturnType == "row") {
-              isChecked.value = tmpRows;
+              isChecked.value = tmpRows
+                .map((val: any) => {
+                  if (!val.disabled) return val;
+                  else return null;
+                })
+                .filter((item: any) => item);
             } else {
-              tmpRows.forEach((val: any) => {
-                isChecked.value.push(val[setting.keyColumn]);
-              });
+              isChecked.value = tmpRows
+                .map((val: any) => {
+                  if (!val.disabled) return val;
+                  else return null;
+                })
+                .filter((item: any) => item);
             }
           }
           rowCheckbox.value.forEach((val: HTMLInputElement) => {
-            if (val) {
+            if (val && !val.disabled) {
               val.checked = state;
             }
           });
@@ -1532,5 +1537,13 @@ tr {
 }
 .vtl-tbody-td.hover {
   background-color: #ececec;
+}
+.form-check {
+  padding-left: 0px;
+  margin-bottom: 0px;
+}
+
+.form-check .form-check-input {
+  margin-left: 0em;
 }
 </style>

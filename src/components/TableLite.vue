@@ -51,13 +51,14 @@
                     :class="{
                       'vtl-sortable': col.sortable,
                       'vtl-both': col.sortable,
-                      'vtl-asc': setting.order === col.field && setting.sort === 'asc',
-                      'vtl-desc': setting.order === col.field && setting.sort === 'desc',
+                      'vtl-asc':
+                        setting.order === col.field && setting.sort === 'asc',
+                      'vtl-desc':
+                        setting.order === col.field && setting.sort === 'desc',
                     }"
                     @click.prevent="col.sortable ? doSort(col.field) : false"
                     v-html="col.label"
-                  >
-                  </div>
+                  ></div>
                 </th>
               </tr>
             </thead>
@@ -65,21 +66,30 @@
               <tbody
                 v-if="isStaticMode"
                 class="vtl-tbody"
-                :set="(templateRows = groupingKey == '' ? [localRows] : localRows)"
+                :set="
+                  (templateRows = groupingKey == '' ? [localRows] : localRows)
+                "
               >
                 <template
                   v-for="(rows, groupingIndex) in templateRows"
                   :key="groupingIndex"
                 >
-                  <tr v-if="groupingKey != ''" class="vtl-tbody-tr vtl-group-tr">
+                  <tr
+                    v-if="groupingKey != ''"
+                    class="vtl-tbody-tr vtl-group-tr"
+                  >
                     <td
-                      :colspan="hasCheckbox ? columns.length + 1 : columns.length"
+                      :colspan="
+                        hasCheckbox ? columns.length + 1 : columns.length
+                      "
                       class="vtl-tbody-td vtl-group-td"
                     >
                       <div class="flex">
                         <div v-if="hasGroupToggle" class="animation">
                           <a
-                            :ref="(el) => (toggleButtonRefs[groupingIndex] = el)"
+                            :ref="
+                              (el) => (toggleButtonRefs[groupingIndex] = el)
+                            "
                             class="cursor-pointer"
                             @click.prevent="toggleGroup(groupingIndex)"
                             >▼</a
@@ -110,7 +120,9 @@
                     :name="'vtl-group-' + groupingIndex"
                     class="vtl-tbody-tr"
                     :class="
-                      typeof rowClasses === 'function' ? rowClasses(row) : rowClasses
+                      typeof rowClasses === 'function'
+                        ? rowClasses(row)
+                        : rowClasses
                     "
                     @mouseenter="addHoverClassToTr"
                     @mouseleave="removeHoverClassFromTr"
@@ -153,21 +165,30 @@
               </tbody>
               <tbody
                 v-else
-                :set="(templateRows = groupingKey == '' ? [rows] : groupingRows)"
+                :set="
+                  (templateRows = groupingKey == '' ? [rows] : groupingRows)
+                "
               >
                 <template
                   v-for="(rows, groupingIndex) in templateRows"
                   :key="groupingIndex"
                 >
-                  <tr v-if="groupingKey != ''" class="vtl-tbody-tr vtl-group-tr">
+                  <tr
+                    v-if="groupingKey != ''"
+                    class="vtl-tbody-tr vtl-group-tr"
+                  >
                     <td
-                      :colspan="hasCheckbox ? columns.length + 1 : columns.length"
+                      :colspan="
+                        hasCheckbox ? columns.length + 1 : columns.length
+                      "
                       class="vtl-tbody-td vtl-group-td"
                     >
                       <div class="flex">
                         <div v-if="hasGroupToggle" class="animation">
                           <a
-                            :ref="(el) => (toggleButtonRefs[groupingIndex] = el)"
+                            :ref="
+                              (el) => (toggleButtonRefs[groupingIndex] = el)
+                            "
                             class="cursor-pointer"
                             @click.prevent="toggleGroup(groupingIndex)"
                             >▼</a
@@ -198,7 +219,9 @@
                     :key="row[setting.keyColumn] ? row[setting.keyColumn] : i"
                     class="vtl-tbody-tr"
                     :class="
-                      typeof rowClasses === 'function' ? rowClasses(row) : rowClasses
+                      typeof rowClasses === 'function'
+                        ? rowClasses(row)
+                        : rowClasses
                     "
                     @mouseenter="addHoverClassToTr"
                     @mouseleave="removeHoverClassFromTr"
@@ -248,13 +271,23 @@
           <div class="vtl-paging-info col-sm-12 col-md-4">
             <div role="status" aria-live="polite">
               {{
-                stringFormat(messages.pagingInfo, setting.offset, setting.limit, total)
+                stringFormat(
+                  messages.pagingInfo,
+                  setting.offset,
+                  setting.limit,
+                  total
+                )
               }}
             </div>
           </div>
           <div class="vtl-paging-change-div col-sm-12 col-md-4">
-            <span class="vtl-paging-count-label">{{ messages.pageSizeChangeLabel }}</span>
-            <select class="vtl-paging-count-dropdown" v-model="setting.pageSize">
+            <span class="vtl-paging-count-label">{{
+              messages.pageSizeChangeLabel
+            }}</span>
+            <select
+              class="vtl-paging-count-dropdown"
+              v-model="setting.pageSize"
+            >
               <option
                 v-for="pageOption in pageOptions"
                 :value="pageOption.value"
@@ -263,9 +296,15 @@
                 {{ pageOption.text }}
               </option>
             </select>
-            <span class="vtl-paging-page-label">{{ messages.gotoPageLabel }}</span>
+            <span class="vtl-paging-page-label">{{
+              messages.gotoPageLabel
+            }}</span>
             <select class="vtl-paging-page-dropdown" v-model="setting.page">
-              <option v-for="n in setting.maxPage" :key="n" :value="parseInt(n)">
+              <option
+                v-for="n in setting.maxPage"
+                :key="n"
+                :value="parseInt(n)"
+              >
                 {{ n }}
               </option>
             </select>
@@ -646,7 +685,8 @@ export default defineComponent({
 
         result = {};
         for (let index = setting.offset - 1; index < setting.limit; index++) {
-          result[rows[index][props.groupingKey]] = tmp[rows[index][props.groupingKey]];
+          result[rows[index][props.groupingKey]] =
+            tmp[rows[index][props.groupingKey]];
         }
       } else {
         result = [];
@@ -690,7 +730,9 @@ export default defineComponent({
           setting.isIndeterminate = false;
           isChecked.value = [];
           if (state) {
-            let tmpRows = (props.isStaticMode) ? props.rows.slice((setting.offset - 1), setting.limit) : props.rows;
+            let tmpRows = props.isStaticMode
+              ? props.rows.slice(setting.offset - 1, setting.limit)
+              : props.rows;
             if (props.checkedReturnType == "row") {
               isChecked.value = tmpRows;
             } else {
@@ -920,7 +962,8 @@ export default defineComponent({
     // Call 「is-finished」 Method
     const callIsFinished = () => {
       if (localTable.value) {
-        let localElement = localTable.value.getElementsByClassName("is-rows-el");
+        let localElement =
+          localTable.value.getElementsByClassName("is-rows-el");
         emit("is-finished", localElement);
       }
       emit("get-now-page", setting.page);
@@ -945,7 +988,9 @@ export default defineComponent({
 
       nextTick(function () {
         if (props.startCollapsed || props.isKeepCollapsed) {
-          for (const [groupIndex, el] of Object.entries(toggleButtonRefs.value)) {
+          for (const [groupIndex, el] of Object.entries(
+            toggleButtonRefs.value
+          )) {
             if (el) {
               let isOpen = !props.startCollapsed;
               if (
@@ -1020,11 +1065,11 @@ export default defineComponent({
 
     /**
      * Add hover class to td
-     * 
-     * @param {Number} index 
+     *
+     * @param {Number} index
      */
     const addVerticalHighlight = (index) => {
-      if (! setting.isVerticalHighlight) {
+      if (!setting.isVerticalHighlight) {
         return;
       }
       let elements = localTable.value.querySelectorAll(".vtl-tbody-td" + index);
@@ -1036,10 +1081,10 @@ export default defineComponent({
     /**
      * Remove hover class from td
      *
-     * @param {Number} index 
+     * @param {Number} index
      */
     const removeVerticalHighlight = (index) => {
-      if (! setting.isVerticalHighlight) {
+      if (!setting.isVerticalHighlight) {
         return;
       }
       let elements = localTable.value.querySelectorAll(".vtl-tbody-td" + index);
