@@ -265,51 +265,53 @@
           </table>
         </div>
       </div>
-      <div class="vtl-paging vtl-row" v-if="rows.length > 0">
+      <div
+        class="vtl-paging vtl-row d-flex justify-content-end align-items-center"
+        v-if="rows.length > 0"
+      >
         <template v-if="!setting.isHidePaging">
-          <div class="vtl-paging-info col-sm-12 col-md-4">
+          <!-- <div class="vtl-paging-info col-sm-12 col-md-4">
             <div role="status" aria-live="polite">
               {{
-                stringFormat(
-                  messages.pagingInfo,
-                  setting.offset,
-                  setting.limit,
-                  total
-                )
+                stringFormat(messages.pagingInfo, setting.offset, setting.limit, total)
               }}
             </div>
-          </div>
-          <div class="vtl-paging-change-div col-sm-12 col-md-4">
-            <span class="vtl-paging-count-label">{{
-              messages.pageSizeChangeLabel
-            }}</span>
-            <select
-              class="vtl-paging-count-dropdown"
-              v-model="setting.pageSize"
-            >
-              <option
-                v-for="pageOption in (pageOptions as Array<pageOption>)"
-                :value="pageOption.value"
-                :key="pageOption.value"
+          </div> -->
+
+          <div
+            class="vtl-paging-pagination-div col-sm-12 col-md-4 d-flex justify-content-end align-items-center"
+          >
+            <div class="vtl-paging-change-div mx-4">
+              <span class="vtl-paging-count-label">{{
+                messages.pageSizeChangeLabel
+              }}</span>
+              <select
+                class="vtl-paging-count-dropdown"
+                v-model="setting.pageSize"
               >
-                {{ pageOption.text }}
-              </option>
-            </select>
-            <span class="vtl-paging-page-label">{{
-              messages.gotoPageLabel
-            }}</span>
-            <select class="vtl-paging-page-dropdown" v-model="setting.page">
-              <option
-                v-for="n in setting.maxPage"
-                :key="n"
-                :value="parseInt(n.toString())"
-              >
-                {{ n }}
-              </option>
-            </select>
-          </div>
-          <div class="vtl-paging-pagination-div col-sm-12 col-md-4">
-            <div class="dataTables_paginate">
+                <option
+                  v-for="pageOption in (pageOptions as Array<pageOption>)"
+                  :value="pageOption.value"
+                  :key="pageOption.value"
+                >
+                  {{ pageOption.text }}
+                </option>
+              </select>
+              <span class="vtl-paging-page-label">{{
+                messages.gotoPageLabel
+              }}</span>
+              <select class="vtl-paging-page-dropdown" v-model="setting.page">
+                <option
+                  v-for="n in setting.maxPage"
+                  :key="n"
+                  :value="parseInt(n.toString())"
+                >
+                  {{ n }}
+                </option>
+              </select>
+            </div>
+
+            <div class="dataTables_paginate mx-4">
               <ul class="vtl-paging-pagination-ul vtl-pagination">
                 <li
                   class="vtl-paging-pagination-page-li vtl-paging-pagination-page-li-first page-item"
@@ -469,7 +471,7 @@ export default defineComponent({
     // Checkbox勾選後返回資料的型態 (Returns data type for checked of Checkbox)
     checkedReturnType: {
       type: String,
-      default: "key",
+      default: "row",
     },
     // 標題 (title)
     title: {
@@ -532,10 +534,10 @@ export default defineComponent({
       type: Object,
       default: () => {
         return {
-          pagingInfo: "Showing {0}-{1} of {2}",
-          pageSizeChangeLabel: "Row count:",
-          gotoPageLabel: "Go to page:",
-          noDataAvailable: "No data",
+          pagingInfo: "{2} 중 {0}-{1} 표시",
+          pageSizeChangeLabel: "행갯수:",
+          gotoPageLabel: "이동:",
+          noDataAvailable: "데이터가 없습니다",
         };
       },
     },
@@ -547,7 +549,7 @@ export default defineComponent({
     // 插槽模式 (V-slot mode)
     isSlotMode: {
       type: Boolean,
-      default: false,
+      default: true,
     },
     // 是否隱藏換頁資訊 (Hide paging)
     isHidePaging: {
@@ -932,13 +934,20 @@ export default defineComponent({
       let sort = setting.sort;
       let offset = (page - 1) * setting.pageSize;
       let limit = setting.pageSize;
+
       if (!props.isReSearch || page > 1 || page == prevPage) {
         // 非重新查詢發生的頁碼變動才執行呼叫查詢 (Call query will only be executed if the page number is changed without re-query)
         emit("do-search", offset, limit, order, sort);
       }
     };
     // 監聽頁碼切換 (Monitor page switching)
-    watch(() => setting.page, changePage);
+    watch(
+      () => setting.page,
+      (val: number, old: any) => {
+        changePage(val, old);
+      },
+      { immediate: true }
+    );
     // 監聽手動頁碼切換 (Monitor manual page switching)
     watch(
       () => props.page,
