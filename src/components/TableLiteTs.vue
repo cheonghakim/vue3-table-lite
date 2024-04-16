@@ -21,6 +21,22 @@
             ref="localTable"
             :style="'max-height: ' + maxHeight + 'px;'"
           >
+            <colgroup>
+              <col v-if="hasCheckbox" class="vtl-checkbox-th" />
+              <col
+                v-for="(col, index) in (columns as Array<any>)"
+                :key="`col-${index}`"
+                :style="
+                  Object.assign(
+                    {
+                      width: getWidth(col),
+                      'min-width': getMinWidth(col),
+                    },
+                    col.headerStylest
+                  )
+                "
+              />
+            </colgroup>
             <thead class="vtl-thead">
               <tr class="vtl-thead-tr">
                 <th v-if="hasCheckbox" class="vtl-thead-th vtl-checkbox-th">
@@ -38,28 +54,73 @@
                   class="vtl-thead-th"
                   :class="col.headerClasses"
                   :key="index"
-                  :style="
-                    Object.assign(
-                      {
-                        width: col.width ? col.width : 'auto',
-                      },
-                      col.headerStyles
-                    )
-                  "
                 >
-                  <div
-                    class="vtl-thead-column"
-                    :class="{
-                      'vtl-sortable': col.sortable,
-                      'vtl-both': col.sortable,
-                      'vtl-asc':
-                        setting.order === col.field && setting.sort === 'asc',
-                      'vtl-desc':
-                        setting.order === col.field && setting.sort === 'desc',
-                    }"
-                    @click.prevent="col.sortable ? doSort(col.field) : false"
-                    v-html="col.label"
-                  ></div>
+                  <div class="d-flex align-items-center">
+                    <div
+                      class="vtl-thead-column"
+                      :class="{
+                        'vtl-sortable': col.sortable,
+                        'vtl-both': col.sortable,
+                        'vtl-asc':
+                          setting.order === col.field && setting.sort === 'asc',
+                        'vtl-desc':
+                          setting.order === col.field &&
+                          setting.sort === 'desc',
+                      }"
+                      @click.prevent="col.sortable ? doSort(col.field) : false"
+                      v-html="col.label"
+                    ></div>
+
+                    <div>
+                      <i
+                        class="mdi mdi-filter-outline filter-icon cursor-pointer"
+                        @click="openLayer($event, col)"
+                        v-if="col.filter"
+                      ></i>
+
+                      <transition>
+                        <div
+                          class="card filter-root"
+                          v-if="col.showFilter"
+                          id="filterRef"
+                        >
+                          <div class="card-body">
+                            <div
+                              class="d-flex align-items-center justify-content-between mb-2"
+                            >
+                              <div>
+                                <span class="fs-14 fw-600">필터</span>
+                              </div>
+                              <div
+                                @click="closeLayer(col)"
+                                class="cursor-pointer"
+                              >
+                                <i class="mdi mdi-close close-filter"></i>
+                              </div>
+                            </div>
+
+                            <div class="d-flex align-items-center">
+                              <input
+                                type="text"
+                                class="form-control"
+                                placeholder="검색어 입력"
+                                v-model="searchKeyword"
+                                @input="inputFilter"
+                                @keydown.enter="searchFilter"
+                              />
+
+                              <button
+                                class="btn btn-transparent search-btn mx-2"
+                                @click="searchFilter"
+                              >
+                                <i class="mdi mdi-magnify"></i>
+                              </button>
+                            </div>
+                          </div>
+                        </div>
+                      </transition>
+                    </div>
+                  </div>
                 </th>
               </tr>
             </thead>
@@ -141,6 +202,7 @@
                           "
                           :value="row[setting.keyColumn]"
                           :disabled="row.disabled"
+                          :checked="checkState(row)"
                           @click="checked(row, $event)"
                         />
                       </div>
@@ -237,6 +299,7 @@
                           :ref="(el: any) => (rowCheckbox as Array<HTMLElement>).push(el)"
                           :value="row[setting.keyColumn]"
                           :disabled="row.disabled"
+                          :checked="checkState(row)"
                           @click="checked(row, $event)"
                         />
                       </div>
@@ -279,7 +342,7 @@
           </div> -->
 
           <div
-            class="vtl-paging-pagination-div col-sm-12 col-md-4 d-flex justify-content-end align-items-center"
+            class="vtl-paging-pagination-div col-sm-12 col-md-12 d-flex justify-content-end align-items-center"
           >
             <div class="vtl-paging-change-div mx-4">
               <span class="vtl-paging-count-label">{{
@@ -314,6 +377,7 @@
             <div class="dataTables_paginate mx-4">
               <ul class="vtl-paging-pagination-ul vtl-pagination">
                 <li
+                  v-if="setting.page > 1"
                   class="vtl-paging-pagination-page-li vtl-paging-pagination-page-li-first page-item"
                   :class="{ disabled: setting.page <= 1 }"
                 >
@@ -327,6 +391,7 @@
                   </a>
                 </li>
                 <li
+                  v-if="setting.page > 1"
                   class="vtl-paging-pagination-page-li vtl-paging-pagination-page-li-prev page-item"
                   :class="{ disabled: setting.page <= 1 }"
                 >
@@ -343,7 +408,10 @@
                   class="vtl-paging-pagination-page-li vtl-paging-pagination-page-li-number page-item"
                   v-for="n in setting.paging"
                   :key="n"
-                  :class="{ disabled: setting.page === n }"
+                  :class="{
+                    disabled: setting.page === n,
+                    activated: setting.page === n,
+                  }"
                 >
                   <a
                     class="vtl-paging-pagination-page-link vtl-paging-pagination-page-link-number page-link cursor-pointer"
@@ -352,6 +420,7 @@
                   >
                 </li>
                 <li
+                  v-if="setting.page < setting.maxPage"
                   class="vtl-paging-pagination-page-li vtl-paging-pagination-page-li-next page-item"
                   :class="{ disabled: setting.page >= setting.maxPage }"
                 >
@@ -365,6 +434,7 @@
                   </a>
                 </li>
                 <li
+                  v-if="setting.page < setting.maxPage"
                   class="vtl-paging-pagination-page-li vtl-paging-pagination-page-li-last page-item"
                   :class="{ disabled: setting.page >= setting.maxPage }"
                 >
@@ -392,6 +462,8 @@
   <!-- eslint-disable @typescript-eslint/no-explicit-any -->
 </template>
 <script lang="ts">
+import { isEqual } from "lodash-es";
+import { onUnmounted } from "vue";
 import {
   defineComponent,
   ref,
@@ -401,6 +473,7 @@ import {
   onBeforeUpdate,
   nextTick,
   onMounted,
+  Ref,
 } from "vue";
 
 interface pageOption {
@@ -435,13 +508,14 @@ export default defineComponent({
   name: "my-table",
   emits: {
     // eslint-disable-next-line
-    "return-checked-rows": (_rows: any[]) => true,
+    "return-checked-rows": (_rows: any[], _rowModel: any[]) => true,
     // eslint-disable-next-line
     "do-search": (
       _offset: number,
       _limit: number,
       _order: string,
-      _sort: string
+      _sort: string,
+      _page: number
     ) => true,
     // eslint-disable-next-line
     "is-finished": (_elements: HTMLCollectionOf<Element>) => true,
@@ -451,6 +525,7 @@ export default defineComponent({
     "row-clicked": (_row: any) => true,
     // eslint-disable-next-line
     "row-toggled": (_rows: any[], _isCollapsed: boolean) => true,
+    "on-filter": (_keyword: string) => true,
   },
   props: {
     // 是否讀取中 (is data loading)
@@ -620,9 +695,89 @@ export default defineComponent({
       type: String,
       default: "form-check form-check-info",
     },
+    selectedItems: {
+      type: Array,
+    },
   },
   setup(props, { emit, slots }) {
+    const checkModel: Ref<any[]> = ref([]);
     let localTable = ref<HTMLElement | null>(null);
+
+    // 검색
+    const searchKeyword = ref();
+    const filterCol = ref();
+
+    const closeFilterLayer = (evt: any) => {
+      const id = document.querySelector("#filterRef");
+      if (!id) return;
+      if (
+        filterCol.value &&
+        !evt.target.classList?.contains("filter-icon") &&
+        !id.contains(evt.target)
+      ) {
+        closeLayer(filterCol.value);
+      }
+    };
+
+    const openLayer = (evt: any, col: any) => {
+      col.showFilter = true;
+      filterCol.value = col;
+    };
+
+    const inputFilter = (evt: any) => {
+      searchKeyword.value = evt.target.value;
+    };
+
+    const searchFilter = () => {
+      emit("on-filter", {
+        keyword: searchKeyword.value,
+        columnData: filterCol.value,
+      });
+    };
+
+    const closeLayer = (col: any) => {
+      col.showFilter = false;
+      searchKeyword.value = null;
+      filterCol.value = null;
+    };
+    //
+
+    // 넓이 조절
+    const getWidth = (col: any) => {
+      if (col.flex) return "100%";
+      else if (
+        col?.width?.includes("%") &&
+        !col?.width?.includes("px") &&
+        !col.flex
+      )
+        return col.width;
+      else if (
+        !col?.width?.includes("%") &&
+        !col?.width?.includes("px") &&
+        !col.flex
+      )
+        return "auto";
+      return "";
+    };
+
+    const getMinWidth = (col: any) => {
+      if (col.flex) return "";
+      else if (
+        !col?.width?.includes("%") &&
+        col?.width?.includes("px") &&
+        !col.flex
+      )
+        return col.width;
+      else if (
+        !col?.width?.includes("%") &&
+        !col?.width?.includes("px") &&
+        !col.flex
+      )
+        return "auto";
+      return "";
+    };
+
+    //
 
     // 檢查下拉選單中是否包含預設一頁顯示筆數 (Validate dropdown's values have page-size value or not)
     let tmpPageOptions = props.pageOptions as Array<pageOption>;
@@ -787,7 +942,7 @@ export default defineComponent({
     /**
      * 監聽全勾選Checkbox (Check all checkboxes for monitoring)
      */
-    watch(
+    const stopWatch1 = watch(
       () => setting.isCheckAll,
       (state: boolean) => {
         if (props.hasCheckbox) {
@@ -819,7 +974,7 @@ export default defineComponent({
             }
           });
           // 回傳畫面上選上的資料 (Return the selected data on the screen)
-          emit("return-checked-rows", isChecked.value);
+          emit("return-checked-rows", isChecked.value, checkModel.value);
         }
       }
     );
@@ -827,7 +982,7 @@ export default defineComponent({
     /**
      * 監控有無顯示Checkbox變化 (hasCeckbox props for monitoring)
      */
-    watch(
+    const stopWatch2 = watch(
       () => props.hasCheckbox,
       (v) => {
         if (!v) {
@@ -841,6 +996,7 @@ export default defineComponent({
      */
     const checked = (row: any, event: MouseEvent): void => {
       event.stopPropagation();
+
       setting.isIndeterminate = false;
       let checkboxValue = row[setting.keyColumn];
       if (props.checkedReturnType == "row") {
@@ -848,16 +1004,25 @@ export default defineComponent({
       }
       if ((event.target as HTMLInputElement).checked) {
         isChecked.value.push(checkboxValue);
+        checkModel.value.push(row);
       } else {
         const index = isChecked.value.indexOf(checkboxValue);
         if (index >= 0) {
           isChecked.value.splice(index, 1);
         }
         if (isChecked.value.length === 0) clearChecked();
+
+        for (let i = 0; i < checkModel.value.length; i++) {
+          const item = checkModel.value[i];
+          const check = isEqual(item, row);
+          if (check) {
+            checkModel.value.splice(i, 1);
+          }
+        }
       }
       if (isChecked.value.length == props.rows.length) {
         if (setting.isCheckAll) {
-          emit("return-checked-rows", isChecked.value);
+          emit("return-checked-rows", isChecked.value, checkModel.value);
         }
         setting.isCheckAll = true;
       } else {
@@ -865,7 +1030,7 @@ export default defineComponent({
           setting.isIndeterminate = true;
         }
         // 回傳畫面上選上的資料 (Return the selected data on the screen)
-        emit("return-checked-rows", isChecked.value);
+        emit("return-checked-rows", isChecked.value, checkModel.value);
       }
     };
 
@@ -881,7 +1046,7 @@ export default defineComponent({
         }
       });
       // 回傳畫面上選上的資料 (Return the selected data on the screen)
-      emit("return-checked-rows", isChecked.value);
+      emit("return-checked-rows", isChecked.value, checkModel.value);
     };
 
     ////////////////////////////
@@ -905,7 +1070,7 @@ export default defineComponent({
       let limit = setting.pageSize;
       setting.order = order;
       setting.sort = sort;
-      emit("do-search", offset, limit, order, sort);
+      emit("do-search", offset, limit, order, sort, setting.page);
 
       // 清空畫面上選擇的資料 (Clear the selected data on the screen)
       if (setting.isCheckAll) {
@@ -937,11 +1102,11 @@ export default defineComponent({
 
       if (!props.isReSearch || page > 1 || page == prevPage) {
         // 非重新查詢發生的頁碼變動才執行呼叫查詢 (Call query will only be executed if the page number is changed without re-query)
-        emit("do-search", offset, limit, order, sort);
+        emit("do-search", offset, limit, order, sort, page);
       }
     };
     // 監聽頁碼切換 (Monitor page switching)
-    watch(
+    const stopWatch3 = watch(
       () => setting.page,
       (val: number, old: any) => {
         changePage(val, old);
@@ -949,7 +1114,7 @@ export default defineComponent({
       { immediate: true }
     );
     // 監聽手動頁碼切換 (Monitor manual page switching)
-    watch(
+    const stopWatch4 = watch(
       () => props.page,
       (val) => {
         if (val <= 1) {
@@ -979,13 +1144,20 @@ export default defineComponent({
       }
     };
     // 監聽組件內顯示筆數切換 (Monitor display number switch from component)
-    watch(() => setting.pageSize, changePageSize);
+    const stopWatch5 = watch(() => setting.pageSize, changePageSize);
     // 監聽來自Prop的顯示筆數切換 (Monitor display number switch from prop)
     watch(
       () => props.pageSize,
       (newPageSize) => {
         setting.pageSize = newPageSize;
       }
+    );
+    const stopWatch6 = watch(
+      () => props.selectedItems,
+      (val: any) => {
+        if (Array.isArray(val)) checkModel.value = val;
+      },
+      { immediate: true }
     );
 
     /**
@@ -1006,6 +1178,15 @@ export default defineComponent({
       setting.page = page;
     };
 
+    const checkState = (row: any) => {
+      for (let i = 0; i < checkModel.value.length; i++) {
+        const state = checkModel.value[i];
+        const checked = isEqual(row, state);
+        if (checked) return true;
+      }
+      return false;
+    };
+
     /**
      * 下一頁 (Next page)
      */
@@ -1018,9 +1199,9 @@ export default defineComponent({
     };
 
     // 監聽資料變更 (Monitoring data changes)
-    watch(
+    const stopWatch7 = watch(
       () => props.rows,
-      () => {
+      (arr: any[]) => {
         if (props.isReSearch || props.isStaticMode) {
           setting.page = 1;
         }
@@ -1191,7 +1372,20 @@ export default defineComponent({
         if (props.rows.length > 0) {
           callIsFinished();
         }
+
+        window.addEventListener("click", closeFilterLayer);
       });
+    });
+
+    onUnmounted(() => {
+      stopWatch1();
+      stopWatch2();
+      stopWatch3();
+      stopWatch4();
+      stopWatch5();
+      stopWatch6();
+      stopWatch7();
+      window.removeEventListener("click", closeFilterLayer);
     });
 
     return {
@@ -1215,6 +1409,15 @@ export default defineComponent({
       removeHoverClassFromTr,
       addVerticalHighlight,
       removeVerticalHighlight,
+      checkState,
+      getWidth,
+      getMinWidth,
+      openLayer,
+      inputFilter,
+      searchFilter,
+      closeLayer,
+
+      searchKeyword,
     };
   },
   watch: {
@@ -1295,6 +1498,14 @@ select {
   margin-bottom: 0;
 }
 
+table {
+  display: table;
+}
+
+.vtl {
+  background-color: inherit;
+}
+
 .vtl-table {
   width: 100%;
   margin-bottom: 1rem;
@@ -1304,6 +1515,7 @@ select {
 
 th {
   text-align: inherit;
+  white-space: nowrap;
 }
 
 tr {
@@ -1554,5 +1766,24 @@ tr {
 
 .form-check .form-check-input {
   margin-left: 0em;
+}
+.activated {
+  font-weight: 700;
+}
+.filter-icon {
+  font-size: 15px;
+}
+.filter-root {
+  transform: translate(10px, 10px);
+  position: fixed;
+  z-index: 10;
+
+  .search-btn {
+    position: absolute;
+    right: 5px;
+  }
+}
+.w-100 {
+  width: 100% !important;
 }
 </style>
