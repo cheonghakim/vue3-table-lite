@@ -1,467 +1,6 @@
-<template>
-  <!-- eslint-disable @typescript-eslint/no-explicit-any -->
-  <div class="vtl vtl-card">
-    <div class="vtl-card-title" v-if="title">{{ title }}</div>
-    <div class="vtl-card-body">
-      <div class="vtl-row">
-        <div
-          class="col-sm-12"
-          :class="{
-            'fixed-first-column': isFixedFirstColumn,
-            'fixed-first-second-column': isFixedFirstColumn && hasCheckbox,
-          }"
-        >
-          <div v-if="isLoading" class="vtl-loading-mask">
-            <div class="vtl-loading-content">
-              <span style="color: white">Loading...</span>
-            </div>
-          </div>
-          <table
-            class="vtl-table vtl-table-hover vtl-table-bordered vtl-table-responsive vtl-table-responsive-sm"
-            ref="localTable"
-            :style="'max-height: ' + maxHeight + 'px;'"
-          >
-            <colgroup>
-              <col v-if="hasCheckbox" class="vtl-checkbox-th" />
-              <col
-                v-for="(col, index) in (columns as Array<any>)"
-                :key="`col-${index}`"
-                :style="
-                  Object.assign(
-                    {
-                      width: getWidth(col),
-                      'min-width': getMinWidth(col),
-                    },
-                    col.headerStylest
-                  )
-                "
-              />
-            </colgroup>
-            <thead class="vtl-thead">
-              <tr class="vtl-thead-tr">
-                <th v-if="hasCheckbox" class="vtl-thead-th vtl-checkbox-th">
-                  <div :class="`${checkboxWrapperClass}`">
-                    <input
-                      type="checkbox"
-                      class="vtl-thead-checkbox form-check-input cursor-pointer"
-                      :indeterminate="setting.isIndeterminate"
-                      v-model="setting.isCheckAll"
-                    />
-                  </div>
-                </th>
-                <th
-                  v-for="(col, index) in (columns as Array<any>)"
-                  class="vtl-thead-th"
-                  :class="col.headerClasses"
-                  :key="index"
-                >
-                  <div class="d-flex align-items-center">
-                    <div
-                      class="vtl-thead-column"
-                      :class="{
-                        'vtl-sortable': col.sortable,
-                        'vtl-both': col.sortable,
-                        'vtl-asc':
-                          setting.order === col.field && setting.sort === 'asc',
-                        'vtl-desc':
-                          setting.order === col.field &&
-                          setting.sort === 'desc',
-                      }"
-                      @click.prevent="col.sortable ? doSort(col.field) : false"
-                      v-html="col.label"
-                    ></div>
-
-                    <div>
-                      <i
-                        class="mdi mdi-filter-outline filter-icon cursor-pointer"
-                        @click="openLayer($event, col)"
-                        v-if="col.filter"
-                      ></i>
-
-                      <transition>
-                        <div
-                          class="card filter-root"
-                          v-if="col.showFilter"
-                          id="filterRef"
-                        >
-                          <div class="card-body">
-                            <div
-                              class="d-flex align-items-center justify-content-between mb-2"
-                            >
-                              <div>
-                                <span class="fs-14 fw-600">필터</span>
-                              </div>
-                              <div
-                                @click="closeLayer(col)"
-                                class="cursor-pointer"
-                              >
-                                <i class="mdi mdi-close close-filter"></i>
-                              </div>
-                            </div>
-
-                            <div class="d-flex align-items-center">
-                              <input
-                                type="text"
-                                class="form-control"
-                                placeholder="검색어 입력"
-                                v-model="searchKeyword"
-                                @input="inputFilter"
-                                @keydown.enter="searchFilter"
-                              />
-
-                              <button
-                                class="btn btn-transparent search-btn mx-2"
-                                @click="searchFilter"
-                              >
-                                <i class="mdi mdi-magnify"></i>
-                              </button>
-                            </div>
-                          </div>
-                        </div>
-                      </transition>
-                    </div>
-                  </div>
-                </th>
-              </tr>
-            </thead>
-            <template v-if="rows.length > 0">
-              <tbody
-                v-if="isStaticMode"
-                class="vtl-tbody"
-                :set="
-                  (templateRows = groupingKey == '' ? [localRows] : localRows)
-                "
-              >
-                <template
-                  v-for="(rows, groupingIndex) in templateRows"
-                  :key="groupingIndex"
-                >
-                  <tr
-                    v-if="groupingKey != ''"
-                    class="vtl-tbody-tr vtl-group-tr"
-                  >
-                    <td
-                      :colspan="
-                        hasCheckbox ? columns.length + 1 : columns.length
-                      "
-                      class="vtl-tbody-td vtl-group-td"
-                    >
-                      <div class="flex">
-                        <div v-if="hasGroupToggle" class="animation">
-                          <a
-                            :ref="(el: any) => (toggleButtonRefs[groupingIndex] as any) = el"
-                            class="cursor-pointer"
-                            @click.prevent="
-                              toggleGroup(groupingIndex.toString())
-                            "
-                            >▼</a
-                          >
-                        </div>
-                        <div
-                          class="ml-2"
-                          v-html="
-                            groupingDisplay
-                              ? groupingDisplay(groupingIndex)
-                              : groupingIndex
-                          "
-                        ></div>
-                      </div>
-                    </td>
-                  </tr>
-                  <tr
-                    v-for="(row, i) in rows"
-                    :key="row[setting.keyColumn] ? row[setting.keyColumn] : i"
-                    :ref="
-                      (el: any) => {
-                        if (!groupingRowsRefs[groupingIndex]) {
-                          groupingRowsRefs[groupingIndex] = [];
-                        }
-                        groupingRowsRefs[groupingIndex][i] = el;
-                      }
-                    "
-                    :name="'vtl-group-' + groupingIndex"
-                    class="vtl-tbody-tr"
-                    :class="
-                      typeof rowClasses === 'function'
-                        ? rowClasses(row)
-                        : rowClasses
-                    "
-                    @mouseenter="addHoverClassToTr"
-                    @mouseleave="removeHoverClassFromTr"
-                    @click="$emit('row-clicked', row)"
-                  >
-                    <td v-if="hasCheckbox" class="vtl-tbody-td">
-                      <div :class="`${checkboxWrapperClass}`">
-                        <input
-                          type="checkbox"
-                          class="vtl-tbody-checkbox form-check-input cursor-pointer"
-                          :ref="
-                            (el: any) => {
-                              (rowCheckbox as Array<HTMLElement>).push(el);
-                            }
-                          "
-                          :value="row[setting.keyColumn]"
-                          :disabled="row.disabled"
-                          :checked="checkState(row)"
-                          @click="checked(row, $event)"
-                        />
-                      </div>
-                    </td>
-                    <td
-                      v-for="(col, j) in (columns as Array<any>)"
-                      :key="j"
-                      class="vtl-tbody-td"
-                      :class="['vtl-tbody-td' + j].concat(col.columnClasses)"
-                      :style="col.columnStyles"
-                      @mouseover="addVerticalHighlight(j)"
-                      @mouseleave="removeVerticalHighlight(j)"
-                    >
-                      <div v-if="col.display" v-html="col.display(row)"></div>
-                      <div v-else>
-                        <div v-if="setting.isSlotMode && slots[col.field]">
-                          <slot :name="col.field" :value="row"></slot>
-                        </div>
-                        <span v-else>{{ row[col.field] }}</span>
-                      </div>
-                    </td>
-                  </tr>
-                </template>
-              </tbody>
-              <tbody
-                v-else
-                :set="
-                  (templateRows = groupingKey == '' ? [rows] : groupingRows)
-                "
-              >
-                <template
-                  v-for="(rows, groupingIndex) in templateRows"
-                  :key="groupingIndex"
-                >
-                  <tr
-                    v-if="groupingKey != ''"
-                    class="vtl-tbody-tr vtl-group-tr"
-                  >
-                    <td
-                      :colspan="
-                        hasCheckbox ? columns.length + 1 : columns.length
-                      "
-                      class="vtl-tbody-td vtl-group-td"
-                    >
-                      <div class="flex">
-                        <div v-if="hasGroupToggle" class="animation">
-                          <a
-                            :ref="(el: any) => (toggleButtonRefs[groupingIndex] as any) = el"
-                            class="cursor-pointer"
-                            @click.prevent="
-                              toggleGroup(groupingIndex.toString())
-                            "
-                            >▼</a
-                          >
-                        </div>
-                        <div
-                          class="ml-2"
-                          v-html="
-                            groupingDisplay
-                              ? groupingDisplay(groupingIndex)
-                              : groupingIndex
-                          "
-                        ></div>
-                      </div>
-                    </td>
-                  </tr>
-                  <tr
-                    v-for="(row, i) in rows"
-                    :ref="
-                      (el: any) => {
-                        if (!groupingRowsRefs[groupingIndex]) {
-                          groupingRowsRefs[groupingIndex] = [];
-                        }
-                        groupingRowsRefs[groupingIndex][i] = el;
-                      }
-                    "
-                    :name="'vtl-group-' + groupingIndex"
-                    :key="row[setting.keyColumn] ? row[setting.keyColumn] : i"
-                    class="vtl-tbody-tr"
-                    :class="
-                      typeof rowClasses === 'function'
-                        ? rowClasses(row)
-                        : rowClasses
-                    "
-                    @mouseenter="addHoverClassToTr"
-                    @mouseleave="removeHoverClassFromTr"
-                    @click="$emit('row-clicked', row)"
-                  >
-                    <td v-if="hasCheckbox" class="vtl-tbody-td">
-                      <div :class="`${checkboxWrapperClass}`">
-                        <input
-                          type="checkbox"
-                          class="vtl-tbody-checkbox form-check-input cursor-pointer"
-                          :ref="(el: any) => (rowCheckbox as Array<HTMLElement>).push(el)"
-                          :value="row[setting.keyColumn]"
-                          :disabled="row.disabled"
-                          :checked="checkState(row)"
-                          @click="checked(row, $event)"
-                        />
-                      </div>
-                    </td>
-                    <td
-                      v-for="(col, j) in (columns as Array<any>)"
-                      :key="j"
-                      class="vtl-tbody-td"
-                      :class="['vtl-tbody-td' + j].concat(col.columnClasses)"
-                      :style="col.columnStyles"
-                      @mouseover="addVerticalHighlight(j)"
-                      @mouseleave="removeVerticalHighlight(j)"
-                    >
-                      <div v-if="col.display" v-html="col.display(row)"></div>
-                      <div v-else>
-                        <div v-if="setting.isSlotMode && slots[col.field]">
-                          <slot :name="col.field" :value="row"></slot>
-                        </div>
-                        <span v-else>{{ row[col.field] }}</span>
-                      </div>
-                    </td>
-                  </tr>
-                </template>
-              </tbody>
-            </template>
-          </table>
-        </div>
-      </div>
-      <div
-        class="vtl-paging vtl-row d-flex justify-content-end align-items-center"
-        v-if="rows.length > 0"
-      >
-        <template v-if="!setting.isHidePaging">
-          <!-- <div class="vtl-paging-info col-sm-12 col-md-4">
-            <div role="status" aria-live="polite">
-              {{
-                stringFormat(messages.pagingInfo, setting.offset, setting.limit, total)
-              }}
-            </div>
-          </div> -->
-
-          <div
-            class="vtl-paging-pagination-div col-sm-12 col-md-12 d-flex justify-content-end align-items-center"
-          >
-            <div class="vtl-paging-change-div mx-4">
-              <span class="vtl-paging-count-label">{{
-                messages.pageSizeChangeLabel
-              }}</span>
-              <select
-                class="vtl-paging-count-dropdown"
-                v-model="setting.pageSize"
-              >
-                <option
-                  v-for="pageOption in (pageOptions as Array<pageOption>)"
-                  :value="pageOption.value"
-                  :key="pageOption.value"
-                >
-                  {{ pageOption.text }}
-                </option>
-              </select>
-              <span class="vtl-paging-page-label">{{
-                messages.gotoPageLabel
-              }}</span>
-              <select class="vtl-paging-page-dropdown" v-model="setting.page">
-                <option
-                  v-for="n in setting.maxPage"
-                  :key="n"
-                  :value="parseInt(n.toString())"
-                >
-                  {{ n }}
-                </option>
-              </select>
-            </div>
-
-            <div class="dataTables_paginate mx-4">
-              <ul class="vtl-paging-pagination-ul vtl-pagination">
-                <li
-                  v-if="setting.page > 1"
-                  class="vtl-paging-pagination-page-li vtl-paging-pagination-page-li-first page-item"
-                  :class="{ disabled: setting.page <= 1 }"
-                >
-                  <a
-                    class="vtl-paging-pagination-page-link vtl-paging-pagination-page-link-first page-link cursor-pointer"
-                    aria-label="Previous"
-                    @click.prevent="setting.page = 1"
-                  >
-                    <span aria-hidden="true">&laquo;</span>
-                    <span class="sr-only">First</span>
-                  </a>
-                </li>
-                <li
-                  v-if="setting.page > 1"
-                  class="vtl-paging-pagination-page-li vtl-paging-pagination-page-li-prev page-item"
-                  :class="{ disabled: setting.page <= 1 }"
-                >
-                  <a
-                    class="vtl-paging-pagination-page-link vtl-paging-pagination-page-link-prev page-link cursor-pointer"
-                    aria-label="Previous"
-                    @click.prevent="prevPage"
-                  >
-                    <span aria-hidden="true">&lt;</span>
-                    <span class="sr-only">Prev</span>
-                  </a>
-                </li>
-                <li
-                  class="vtl-paging-pagination-page-li vtl-paging-pagination-page-li-number page-item"
-                  v-for="n in setting.paging"
-                  :key="n"
-                  :class="{
-                    disabled: setting.page === n,
-                    activated: setting.page === n,
-                  }"
-                >
-                  <a
-                    class="vtl-paging-pagination-page-link vtl-paging-pagination-page-link-number page-link cursor-pointer"
-                    @click.prevent="movePage(n)"
-                    >{{ n }}</a
-                  >
-                </li>
-                <li
-                  v-if="setting.page < setting.maxPage"
-                  class="vtl-paging-pagination-page-li vtl-paging-pagination-page-li-next page-item"
-                  :class="{ disabled: setting.page >= setting.maxPage }"
-                >
-                  <a
-                    class="vtl-paging-pagination-page-link vtl-paging-pagination-page-link-next page-link cursor-pointer"
-                    aria-label="Next"
-                    @click.prevent="nextPage"
-                  >
-                    <span aria-hidden="true">&gt;</span>
-                    <span class="sr-only">Next</span>
-                  </a>
-                </li>
-                <li
-                  v-if="setting.page < setting.maxPage"
-                  class="vtl-paging-pagination-page-li vtl-paging-pagination-page-li-last page-item"
-                  :class="{ disabled: setting.page >= setting.maxPage }"
-                >
-                  <a
-                    class="vtl-paging-pagination-page-link vtl-paging-pagination-page-link-last page-link cursor-pointer"
-                    aria-label="Next"
-                    @click.prevent="setting.page = setting.maxPage"
-                  >
-                    <span aria-hidden="true">&raquo;</span>
-                    <span class="sr-only">Last</span>
-                  </a>
-                </li>
-              </ul>
-            </div>
-          </div>
-        </template>
-      </div>
-      <div class="vtl-row" v-else>
-        <div class="vtl-empty-msg col-sm-12 text-center">
-          {{ messages.noDataAvailable }}
-        </div>
-      </div>
-    </div>
-  </div>
-  <!-- eslint-disable @typescript-eslint/no-explicit-any -->
-</template>
 <script lang="ts">
+import * as DOMPurify from "dompurify";
+import { TableScroll } from "../tableScroll";
 import { isEqual } from "lodash-es";
 import { onUnmounted } from "vue";
 import {
@@ -528,6 +67,9 @@ export default defineComponent({
     "on-filter": (_keyword: string) => true,
   },
   props: {
+    scrollId: {
+      type: String,
+    },
     // 是否讀取中 (is data loading)
     isLoading: {
       type: Boolean,
@@ -702,6 +244,11 @@ export default defineComponent({
   setup(props, { emit, slots }) {
     const checkModel: Ref<any[]> = ref([]);
     let localTable = ref<HTMLElement | null>(null);
+    const scrollHandler = ref(
+      new TableScroll(
+        `#${props.scrollId} > .vtl-card-body > .vtl-row > .col-sm-12 > .vtl-table`
+      )
+    );
 
     // 검색
     const searchKeyword = ref();
@@ -1373,6 +920,7 @@ export default defineComponent({
           callIsFinished();
         }
 
+        // 필터 레이어 닫기 이벤트
         window.addEventListener("click", closeFilterLayer);
       });
     });
@@ -1386,6 +934,8 @@ export default defineComponent({
       stopWatch6();
       stopWatch7();
       window.removeEventListener("click", closeFilterLayer);
+      scrollHandler.value?.stopScroll();
+      scrollHandler.value = null;
     });
 
     return {
@@ -1418,6 +968,8 @@ export default defineComponent({
       closeLayer,
 
       searchKeyword,
+      scrollHandler,
+      sanitize: DOMPurify.default?.sanitize,
     };
   },
   watch: {
@@ -1427,6 +979,495 @@ export default defineComponent({
   },
 });
 </script>
+
+<template>
+  <!-- eslint-disable @typescript-eslint/no-explicit-any -->
+  <div class="vtl vtl-card">
+    <div class="vtl-card-title" v-if="title" :id="scrollId">{{ title }}</div>
+    <div class="vtl-card-body">
+      <div class="vtl-row">
+        <div
+          class="col-sm-12"
+          :class="{
+            'fixed-first-column': isFixedFirstColumn,
+            'fixed-first-second-column': isFixedFirstColumn && hasCheckbox,
+          }"
+        >
+          <div v-if="isLoading" class="vtl-loading-mask">
+            <div class="vtl-loading-content">
+              <span style="color: white">Loading...</span>
+            </div>
+          </div>
+          <table
+            class="vtl-table vtl-table-hover vtl-table-bordered vtl-table-responsive vtl-table-responsive-sm"
+            ref="localTable"
+            :style="'max-height: ' + maxHeight + 'px;'"
+          >
+            <colgroup>
+              <col v-if="hasCheckbox" class="vtl-checkbox-th" />
+              <col
+                v-for="(col, index) in (columns as Array<any>)"
+                :key="`col-${index}`"
+                :style="
+                  Object.assign(
+                    {
+                      width: getWidth(col),
+                      'min-width': getMinWidth(col),
+                    },
+                    col.headerStylest
+                  )
+                "
+              />
+            </colgroup>
+            <thead class="vtl-thead">
+              <tr class="vtl-thead-tr">
+                <th v-if="hasCheckbox" class="vtl-thead-th vtl-checkbox-th">
+                  <div :class="`${checkboxWrapperClass}`">
+                    <input
+                      type="checkbox"
+                      class="vtl-thead-checkbox form-check-input cursor-pointer"
+                      :indeterminate="setting.isIndeterminate"
+                      v-model="setting.isCheckAll"
+                    />
+                  </div>
+                </th>
+                <th
+                  v-for="(col, index) in (columns as Array<any>)"
+                  class="vtl-thead-th"
+                  :class="col.headerClasses"
+                  :key="index"
+                >
+                  <div class="d-flex align-items-center">
+                    <div
+                      class="vtl-thead-column"
+                      :class="{
+                        'vtl-sortable': col.sortable,
+                        'vtl-both': col.sortable,
+                        'vtl-asc':
+                          setting.order === col.field && setting.sort === 'asc',
+                        'vtl-desc':
+                          setting.order === col.field &&
+                          setting.sort === 'desc',
+                      }"
+                      @click.prevent="col.sortable ? doSort(col.field) : false"
+                      v-html="sanitize(col.label)"
+                    ></div>
+
+                    <div>
+                      <i
+                        class="mdi mdi-filter-outline filter-icon cursor-pointer"
+                        @click="openLayer($event, col)"
+                        v-if="col.filter"
+                      ></i>
+
+                      <transition>
+                        <div
+                          class="card filter-root"
+                          v-if="col.showFilter"
+                          id="filterRef"
+                        >
+                          <div class="card-body">
+                            <div
+                              class="d-flex align-items-center justify-content-between mb-2"
+                            >
+                              <div>
+                                <span class="fs-14 fw-600">필터</span>
+                              </div>
+                              <div
+                                @click="closeLayer(col)"
+                                class="cursor-pointer"
+                              >
+                                <i class="mdi mdi-close close-filter"></i>
+                              </div>
+                            </div>
+
+                            <div class="d-flex align-items-center">
+                              <input
+                                type="text"
+                                class="form-control"
+                                placeholder="검색어 입력"
+                                v-model="searchKeyword"
+                                @input="inputFilter"
+                                @keydown.enter="searchFilter"
+                              />
+
+                              <button
+                                class="btn btn-transparent search-btn mx-2"
+                                @click="searchFilter"
+                              >
+                                <i class="mdi mdi-magnify"></i>
+                              </button>
+                            </div>
+                          </div>
+                        </div>
+                      </transition>
+                    </div>
+                  </div>
+                </th>
+              </tr>
+            </thead>
+            <template v-if="rows.length > 0">
+              <tbody
+                v-if="isStaticMode"
+                class="vtl-tbody"
+                :set="
+                  (templateRows = groupingKey == '' ? [localRows] : localRows)
+                "
+              >
+                <template
+                  v-for="(rows, groupingIndex) in templateRows"
+                  :key="groupingIndex"
+                >
+                  <tr
+                    v-if="groupingKey != ''"
+                    class="vtl-tbody-tr vtl-group-tr"
+                  >
+                    <td
+                      :colspan="
+                        hasCheckbox ? columns.length + 1 : columns.length
+                      "
+                      class="vtl-tbody-td vtl-group-td"
+                    >
+                      <div class="flex">
+                        <div v-if="hasGroupToggle" class="animation">
+                          <a
+                            :ref="(el: any) => (toggleButtonRefs[groupingIndex] as any) = el"
+                            class="cursor-pointer"
+                            @click.prevent="
+                              toggleGroup(groupingIndex.toString())
+                            "
+                            >▼</a
+                          >
+                        </div>
+                        <div
+                          class="ml-2"
+                          v-html="
+                            groupingDisplay
+                              ? sanitize(groupingDisplay(groupingIndex))
+                              : sanitize(groupingIndex)
+                          "
+                        ></div>
+                      </div>
+                    </td>
+                  </tr>
+                  <tr
+                    v-for="(row, i) in rows"
+                    :key="row[setting.keyColumn] ? row[setting.keyColumn] : i"
+                    :ref="
+                      (el: any) => {
+                        if (!groupingRowsRefs[groupingIndex]) {
+                          groupingRowsRefs[groupingIndex] = [];
+                        }
+                        groupingRowsRefs[groupingIndex][i] = el;
+                      }
+                    "
+                    :name="'vtl-group-' + groupingIndex"
+                    class="vtl-tbody-tr"
+                    :class="
+                      typeof rowClasses === 'function'
+                        ? rowClasses(row)
+                        : rowClasses
+                    "
+                    @mouseenter="addHoverClassToTr"
+                    @mouseleave="removeHoverClassFromTr"
+                    @click="$emit('row-clicked', row)"
+                  >
+                    <td v-if="hasCheckbox" class="vtl-tbody-td">
+                      <div :class="`${checkboxWrapperClass}`">
+                        <input
+                          type="checkbox"
+                          class="vtl-tbody-checkbox form-check-input cursor-pointer"
+                          :ref="
+                            (el: any) => {
+                              (rowCheckbox as Array<HTMLElement>).push(el);
+                            }
+                          "
+                          :value="row[setting.keyColumn]"
+                          :disabled="row.disabled"
+                          :checked="checkState(row)"
+                          @click="checked(row, $event)"
+                        />
+                      </div>
+                    </td>
+                    <td
+                      v-for="(col, j) in (columns as Array<any>)"
+                      :key="j"
+                      class="vtl-tbody-td"
+                      :class="['vtl-tbody-td' + j].concat(col.columnClasses)"
+                      :style="col.columnStyles"
+                      @mouseover="addVerticalHighlight(j)"
+                      @mouseleave="removeVerticalHighlight(j)"
+                    >
+                      <div
+                        v-if="col.display"
+                        v-html="sanitize(col.display(row))"
+                      ></div>
+                      <div v-else>
+                        <div v-if="setting.isSlotMode && slots[col.field]">
+                          <slot :name="col.field" :value="row"></slot>
+                        </div>
+                        <span v-else>{{ row[col.field] }}</span>
+                      </div>
+                    </td>
+                  </tr>
+                </template>
+              </tbody>
+              <tbody
+                v-else
+                :set="
+                  (templateRows = groupingKey == '' ? [rows] : groupingRows)
+                "
+              >
+                <template
+                  v-for="(rows, groupingIndex) in templateRows"
+                  :key="groupingIndex"
+                >
+                  <tr
+                    v-if="groupingKey != ''"
+                    class="vtl-tbody-tr vtl-group-tr"
+                  >
+                    <td
+                      :colspan="
+                        hasCheckbox ? columns.length + 1 : columns.length
+                      "
+                      class="vtl-tbody-td vtl-group-td"
+                    >
+                      <div class="flex">
+                        <div v-if="hasGroupToggle" class="animation">
+                          <a
+                            :ref="(el: any) => (toggleButtonRefs[groupingIndex] as any) = el"
+                            class="cursor-pointer"
+                            @click.prevent="
+                              toggleGroup(groupingIndex.toString())
+                            "
+                            >▼</a
+                          >
+                        </div>
+                        <div
+                          class="ml-2"
+                          v-html="
+                            groupingDisplay
+                              ? sanitize(groupingDisplay(groupingIndex))
+                              : sanitize(groupingIndex)
+                          "
+                        ></div>
+                      </div>
+                    </td>
+                  </tr>
+                  <tr
+                    v-for="(row, i) in rows"
+                    :ref="
+                      (el: any) => {
+                        if (!groupingRowsRefs[groupingIndex]) {
+                          groupingRowsRefs[groupingIndex] = [];
+                        }
+                        groupingRowsRefs[groupingIndex][i] = el;
+                      }
+                    "
+                    :name="'vtl-group-' + groupingIndex"
+                    :key="row[setting.keyColumn] ? row[setting.keyColumn] : i"
+                    class="vtl-tbody-tr"
+                    :class="
+                      typeof rowClasses === 'function'
+                        ? rowClasses(row)
+                        : rowClasses
+                    "
+                    @mouseenter="addHoverClassToTr"
+                    @mouseleave="removeHoverClassFromTr"
+                    @click="$emit('row-clicked', row)"
+                  >
+                    <td v-if="hasCheckbox" class="vtl-tbody-td">
+                      <div :class="`${checkboxWrapperClass}`">
+                        <input
+                          type="checkbox"
+                          class="vtl-tbody-checkbox form-check-input cursor-pointer"
+                          :ref="(el: any) => (rowCheckbox as Array<HTMLElement>).push(el)"
+                          :value="row[setting.keyColumn]"
+                          :disabled="row.disabled"
+                          :checked="checkState(row)"
+                          @click="checked(row, $event)"
+                        />
+                      </div>
+                    </td>
+                    <td
+                      v-for="(col, j) in (columns as Array<any>)"
+                      :key="j"
+                      class="vtl-tbody-td"
+                      :class="['vtl-tbody-td' + j].concat(col.columnClasses)"
+                      :style="col.columnStyles"
+                      @mouseover="addVerticalHighlight(j)"
+                      @mouseleave="removeVerticalHighlight(j)"
+                    >
+                      <div
+                        v-if="col.display"
+                        v-html="sanitize(col.display(row))"
+                      ></div>
+                      <div v-else>
+                        <div v-if="setting.isSlotMode && slots[col.field]">
+                          <slot :name="col.field" :value="row"></slot>
+                        </div>
+                        <span v-else>{{ row[col.field] }}</span>
+                      </div>
+                    </td>
+                  </tr>
+                </template>
+              </tbody>
+            </template>
+          </table>
+        </div>
+      </div>
+      <div
+        class="vtl-paging vtl-row d-flex justify-content-end align-items-center"
+        v-if="rows.length > 0"
+      >
+        <template v-if="!setting.isHidePaging">
+          <!-- <div class="vtl-paging-info col-sm-12 col-md-4">
+            <div role="status" aria-live="polite">
+              {{
+                stringFormat(messages.pagingInfo, setting.offset, setting.limit, total)
+              }}
+            </div>
+          </div> -->
+
+          <div
+            class="vtl-paging-pagination-div col-sm-12 col-md-12 d-flex justify-content-between align-items-center"
+          >
+            <div class="d-flex justify-content-start my-2 mx-2" v-if="scrollId">
+              <button
+                class="btn btn-normal scroll-btn"
+                @mouseenter="scrollHandler.scrollLeftSide"
+                @mouseleave="scrollHandler.stopScroll"
+              >
+                <i class="mdi mdi-chevron-left"></i>
+              </button>
+              <button
+                class="btn btn-normal scroll-btn me-2"
+                @mouseenter="scrollHandler.scrollRightSide"
+                @mouseleave="scrollHandler.stopScroll"
+              >
+                <i class="mdi mdi-chevron-right"></i>
+              </button>
+            </div>
+
+            <div class="d-flex align-items-center">
+              <div class="vtl-paging-change-div mx-4 d-flex">
+                <span class="vtl-paging-count-label">{{
+                  messages.pageSizeChangeLabel
+                }}</span>
+                <select
+                  class="vtl-paging-count-dropdown"
+                  v-model="setting.pageSize"
+                >
+                  <option
+                    v-for="pageOption in (pageOptions as Array<pageOption>)"
+                    :value="pageOption.value"
+                    :key="pageOption.value"
+                  >
+                    {{ pageOption.text }}
+                  </option>
+                </select>
+                <span class="vtl-paging-page-label">{{
+                  messages.gotoPageLabel
+                }}</span>
+                <select class="vtl-paging-page-dropdown" v-model="setting.page">
+                  <option
+                    v-for="n in setting.maxPage"
+                    :key="n"
+                    :value="parseInt(n.toString())"
+                  >
+                    {{ n }}
+                  </option>
+                </select>
+              </div>
+
+              <div class="dataTables_paginate mx-4">
+                <ul class="vtl-paging-pagination-ul vtl-pagination">
+                  <li
+                    v-if="setting.page > 1"
+                    class="vtl-paging-pagination-page-li vtl-paging-pagination-page-li-first page-item"
+                    :class="{ disabled: setting.page <= 1 }"
+                  >
+                    <a
+                      class="vtl-paging-pagination-page-link vtl-paging-pagination-page-link-first page-link cursor-pointer"
+                      aria-label="Previous"
+                      @click.prevent="setting.page = 1"
+                    >
+                      <span aria-hidden="true">&laquo;</span>
+                      <span class="sr-only">First</span>
+                    </a>
+                  </li>
+                  <li
+                    v-if="setting.page > 1"
+                    class="vtl-paging-pagination-page-li vtl-paging-pagination-page-li-prev page-item"
+                    :class="{ disabled: setting.page <= 1 }"
+                  >
+                    <a
+                      class="vtl-paging-pagination-page-link vtl-paging-pagination-page-link-prev page-link cursor-pointer"
+                      aria-label="Previous"
+                      @click.prevent="prevPage"
+                    >
+                      <span aria-hidden="true">&lt;</span>
+                      <span class="sr-only">Prev</span>
+                    </a>
+                  </li>
+                  <li
+                    class="vtl-paging-pagination-page-li vtl-paging-pagination-page-li-number page-item"
+                    v-for="n in setting.paging"
+                    :key="n"
+                    :class="{
+                      disabled: setting.page === n,
+                      activated: setting.page === n,
+                    }"
+                  >
+                    <a
+                      class="vtl-paging-pagination-page-link vtl-paging-pagination-page-link-number page-link cursor-pointer"
+                      @click.prevent="movePage(n)"
+                      >{{ n }}</a
+                    >
+                  </li>
+                  <li
+                    v-if="setting.page < setting.maxPage"
+                    class="vtl-paging-pagination-page-li vtl-paging-pagination-page-li-next page-item"
+                    :class="{ disabled: setting.page >= setting.maxPage }"
+                  >
+                    <a
+                      class="vtl-paging-pagination-page-link vtl-paging-pagination-page-link-next page-link cursor-pointer"
+                      aria-label="Next"
+                      @click.prevent="nextPage"
+                    >
+                      <span aria-hidden="true">&gt;</span>
+                      <span class="sr-only">Next</span>
+                    </a>
+                  </li>
+                  <li
+                    v-if="setting.page < setting.maxPage"
+                    class="vtl-paging-pagination-page-li vtl-paging-pagination-page-li-last page-item"
+                    :class="{ disabled: setting.page >= setting.maxPage }"
+                  >
+                    <a
+                      class="vtl-paging-pagination-page-link vtl-paging-pagination-page-link-last page-link cursor-pointer"
+                      aria-label="Next"
+                      @click.prevent="setting.page = setting.maxPage"
+                    >
+                      <span aria-hidden="true">&raquo;</span>
+                      <span class="sr-only">Last</span>
+                    </a>
+                  </li>
+                </ul>
+              </div>
+            </div>
+          </div>
+        </template>
+      </div>
+      <div class="vtl-row" v-else>
+        <div class="vtl-empty-msg col-sm-12 text-center">
+          {{ messages.noDataAvailable }}
+        </div>
+      </div>
+    </div>
+  </div>
+  <!-- eslint-disable @typescript-eslint/no-explicit-any -->
+</template>
 
 <style scoped>
 .vtl-checkbox-th {
@@ -1785,5 +1826,8 @@ tr {
 }
 .w-100 {
   width: 100% !important;
+}
+.scroll-btn {
+  padding: 0.3rem 0.45rem;
 }
 </style>
