@@ -251,42 +251,30 @@ export default defineComponent({
     );
 
     // 검색
-    const searchKeyword = ref();
-    const filterCol = ref();
-
-    const closeFilterLayer = (evt: any) => {
-      const id = document.querySelector("#filterRef");
-      if (!id) return;
-      if (
-        filterCol.value &&
-        !evt.target.classList?.contains("filter-icon") &&
-        !id.contains(evt.target)
-      ) {
-        closeLayer(filterCol.value);
-      }
-    };
-
-    const openLayer = (evt: any, col: any) => {
-      col.showFilter = true;
-      filterCol.value = col;
-    };
-
-    const inputFilter = (evt: any) => {
-      searchKeyword.value = evt.target.value;
-    };
-
-    const searchFilter = () => {
-      emit("on-filter", {
-        keyword: searchKeyword.value,
-        columnData: filterCol.value,
-      });
-    };
+    // const closeFilterLayer = (evt: any) => {
+    //   const id = document.querySelector("#filterRef");
+    //   if (!id) return;
+    //   if (!evt.target.classList?.contains("filter-icon") && !id.contains(evt.target)) {
+    //     closeLayer();
+    //   }
+    // };
 
     const closeLayer = (col: any) => {
       col.showFilter = false;
-      searchKeyword.value = null;
-      filterCol.value = null;
     };
+
+    const openLayer = (evt: any, col: any) => {
+      evt.stopPropagation();
+      col.showFilter = true;
+    };
+
+    const searchFilter = (col: any) => {
+      emit("on-filter", {
+        keyword: col.keyword,
+        columnData: col,
+      });
+    };
+
     //
 
     // 넓이 조절
@@ -921,7 +909,7 @@ export default defineComponent({
         }
 
         // 필터 레이어 닫기 이벤트
-        window.addEventListener("click", closeFilterLayer);
+        // window.addEventListener("click", closeFilterLayer);
       });
     });
 
@@ -933,7 +921,7 @@ export default defineComponent({
       stopWatch5();
       stopWatch6();
       stopWatch7();
-      window.removeEventListener("click", closeFilterLayer);
+      // window.removeEventListener("click", closeFilterLayer);
       scrollHandler.value?.stopScroll();
       scrollHandler.value = null;
     });
@@ -963,11 +951,8 @@ export default defineComponent({
       getWidth,
       getMinWidth,
       openLayer,
-      inputFilter,
       searchFilter,
       closeLayer,
-
-      searchKeyword,
       scrollHandler,
       sanitize: DOMPurify.default?.sanitize,
     };
@@ -1071,7 +1056,9 @@ export default defineComponent({
                               class="d-flex align-items-center justify-content-between mb-2"
                             >
                               <div>
-                                <span class="fs-14 fw-600">필터</span>
+                                <span class="fs-14 fw-600"
+                                  >{{ col.label }} 검색</span
+                                >
                               </div>
                               <div
                                 @click="closeLayer(col)"
@@ -1086,9 +1073,8 @@ export default defineComponent({
                                 type="text"
                                 class="form-control"
                                 placeholder="검색어 입력"
-                                v-model="searchKeyword"
-                                @input="inputFilter"
-                                @keydown.enter="searchFilter"
+                                v-model="col.keyword"
+                                @keydown.enter="searchFilter(col)"
                               />
 
                               <button
@@ -1815,13 +1801,18 @@ tr {
   font-size: 15px;
 }
 .filter-root {
-  transform: translate(10px, 10px);
+  transform: translate(0px, 10px);
   position: fixed;
   z-index: 10;
 
   .search-btn {
     position: absolute;
-    right: 5px;
+    right: 10px;
+  }
+  .search-btn:hover,
+  .search-btn:active,
+  .search-btn:focus-visible {
+    color: #212529;
   }
 }
 .w-100 {
