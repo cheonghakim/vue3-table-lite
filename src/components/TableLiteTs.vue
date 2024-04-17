@@ -251,13 +251,24 @@ export default defineComponent({
     );
 
     // 검색
-    // const closeFilterLayer = (evt: any) => {
-    //   const id = document.querySelector("#filterRef");
-    //   if (!id) return;
-    //   if (!evt.target.classList?.contains("filter-icon") && !id.contains(evt.target)) {
-    //     closeLayer();
-    //   }
-    // };
+    const closeFilterLayer = (evt: any) => {
+      const id = document.querySelector("#filterRef");
+      if (!id) return;
+
+      const filterTargets = [
+        "filter-close-icon",
+        "filter-close",
+        "filter-icon",
+      ];
+      if (
+        !filterTargets.includes(evt.target.getAttribute("name")) &&
+        !id.contains(evt.target)
+      ) {
+        props.columns.forEach((col: any) => {
+          closeLayer(col);
+        });
+      }
+    };
 
     const closeLayer = (col: any) => {
       col.showFilter = false;
@@ -909,7 +920,7 @@ export default defineComponent({
         }
 
         // 필터 레이어 닫기 이벤트
-        // window.addEventListener("click", closeFilterLayer);
+        window.addEventListener("click", closeFilterLayer);
       });
     });
 
@@ -921,7 +932,7 @@ export default defineComponent({
       stopWatch5();
       stopWatch6();
       stopWatch7();
-      // window.removeEventListener("click", closeFilterLayer);
+      window.removeEventListener("click", closeFilterLayer);
       scrollHandler.value?.stopScroll();
       scrollHandler.value = null;
     });
@@ -1040,6 +1051,7 @@ export default defineComponent({
 
                     <div>
                       <i
+                        name="filter-icon"
                         class="mdi mdi-filter-outline filter-icon cursor-pointer"
                         @click="openLayer($event, col)"
                         v-if="col.filter"
@@ -1063,8 +1075,12 @@ export default defineComponent({
                               <div
                                 @click="closeLayer(col)"
                                 class="cursor-pointer"
+                                name="filter-close"
                               >
-                                <i class="mdi mdi-close close-filter"></i>
+                                <i
+                                  class="mdi mdi-close close-filter"
+                                  name="filter-close-icon"
+                                ></i>
                               </div>
                             </div>
 
