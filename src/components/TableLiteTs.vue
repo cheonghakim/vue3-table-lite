@@ -908,9 +908,11 @@ export default defineComponent({
 
         // col resize
         const table = document.querySelector(`#${props.id}`);
-        new ColumnResizer(table, {
-          headerOnly: true,
-        });
+        if (table) {
+          new ColumnResizer(table, {
+            headerOnly: true,
+          });
+        }
       });
     });
 
