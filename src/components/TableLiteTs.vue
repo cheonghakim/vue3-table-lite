@@ -1,5 +1,5 @@
 <script lang="ts">
-import ColumnResizer from "column-resizer";
+import ColumnResizer from "column-resizer/src/ColumnResizer.js";
 import * as DOMPurify from "dompurify";
 import { TableScroll } from "../tableScroll";
 import { isEqual } from "lodash-es";
@@ -68,6 +68,10 @@ export default defineComponent({
     "on-filter": (_keyword: string) => true,
   },
   props: {
+    resizeOptions: {
+      type: Object,
+      default: () => {},
+    },
     id: {
       type: String,
       required: true,
@@ -911,6 +915,8 @@ export default defineComponent({
         if (table) {
           new ColumnResizer(table, {
             headerOnly: true,
+            resizeMode: "flex",
+            ...props.resizeOptions,
           });
         }
       });
@@ -1000,8 +1006,7 @@ export default defineComponent({
                 :style="
                   Object.assign(
                     {
-                      width: getWidth(col),
-                      'min-width': getMinWidth(col),
+                      width: col.width || 'auto',
                     },
                     col.headerStylest
                   )
