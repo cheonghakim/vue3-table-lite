@@ -946,7 +946,6 @@ export default defineComponent({
             resizeMode: "overflow",
             disabledColumns: props.hasCheckbox ? [0] : [], // 특정 컬럼을 안쓰려면 여기를 수정
             ...props.resizeOptions,
-
             serialize: false,
             onResize: (evt: any) => {
               resizer.value.tb.columns
@@ -1030,7 +1029,7 @@ export default defineComponent({
     <div class="vtl-card-body">
       <div class="vtl-row">
         <div
-          class="col-sm-12"
+          class="vtl-table-responsive col-sm-12"
           :class="{
             'fixed-first-column': isFixedFirstColumn,
             'fixed-first-second-column': isFixedFirstColumn && hasCheckbox,
