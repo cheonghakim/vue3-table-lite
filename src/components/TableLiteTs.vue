@@ -943,7 +943,8 @@ export default defineComponent({
         if (table) {
           resizer.value = new ColumnResizer(table, {
             headerOnly: true,
-            resizeMode: "overflow",
+            liveDrag: true,
+            resizeMode: "fit",
             disabledColumns: props.hasCheckbox ? [0] : [], // 특정 컬럼을 안쓰려면 여기를 수정
             ...props.resizeOptions,
             serialize: false,
@@ -1042,7 +1043,7 @@ export default defineComponent({
           </div>
           <table
             :id="id"
-            class="vtl-table vtl-table-hover vtl-table-bordered vtl-table-responsive vtl-table-responsive-sm"
+            class="vtl-table vtl-table-hover vtl-table-bordered"
             ref="localTable"
             :style="'max-height: ' + maxHeight + 'px;'"
           >
