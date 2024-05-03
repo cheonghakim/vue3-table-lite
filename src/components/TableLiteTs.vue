@@ -252,6 +252,7 @@ export default defineComponent({
     },
   },
   setup(props, { emit, slots }) {
+    const resizer = ref();
     const checkModel: Ref<any[]> = ref([]);
     let localTable = ref<HTMLElement | null>(null);
 
@@ -940,7 +941,7 @@ export default defineComponent({
         // col resize
         const table = document.querySelector(`#${props.id}`);
         if (table) {
-          const resizer = new ColumnResizer(table, {
+          resizer.value = new ColumnResizer(table, {
             headerOnly: true,
             resizeMode: "flex",
             disabledColumns: props.hasCheckbox ? [0] : [], // 특정 컬럼을 안쓰려면 여기를 수정
@@ -948,7 +949,7 @@ export default defineComponent({
             widths: props.columns.map((col: any) => col.width),
             serialize: false,
             onResize: (evt: any) => {
-              resizer.tb.columns
+              resizer.value.tb.columns
                 .filter((col: any) => {
                   if (
                     col.getAttribute("class")?.includes("checkbox") === false
@@ -964,6 +965,7 @@ export default defineComponent({
               });
             },
           });
+          console.log(resizer);
         }
       });
     });
@@ -979,6 +981,8 @@ export default defineComponent({
       window.removeEventListener("click", closeFilterLayer);
       scrollHandler.value?.stopScroll();
       scrollHandler.value = null;
+
+      resizer.value?.destroy();
     });
 
     return {
