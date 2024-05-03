@@ -943,10 +943,10 @@ export default defineComponent({
         if (table) {
           resizer.value = new ColumnResizer(table, {
             headerOnly: true,
-            resizeMode: "flex",
+            resizeMode: "overflow",
             disabledColumns: props.hasCheckbox ? [0] : [], // 특정 컬럼을 안쓰려면 여기를 수정
             ...props.resizeOptions,
-            widths: props.columns.map((col: any) => col.width),
+
             serialize: false,
             onResize: (evt: any) => {
               resizer.value.tb.columns
@@ -965,7 +965,6 @@ export default defineComponent({
               });
             },
           });
-          console.log(resizer);
         }
       });
     });
