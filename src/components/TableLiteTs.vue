@@ -80,6 +80,10 @@ export default defineComponent({
     scrollId: {
       type: String,
     },
+    scrollUse: {
+      type: Boolean,
+      default: false,
+    },
     // 是否讀取中 (is data loading)
     isLoading: {
       type: Boolean,
@@ -1367,9 +1371,10 @@ export default defineComponent({
       </div>
       <div
         class="vtl-paging vtl-row d-flex justify-content-end align-items-center"
-        v-if="rows.length > 0 && !setting.isHidePaging"
+        :class="{ 'display-none': setting.isHidePaging }"
+        v-if="rows.length > 0"
       >
-        <template>
+        <template v-if="!setting.isHidePaging">
           <!-- <div class="vtl-paging-info col-sm-12 col-md-4">
             <div role="status" aria-live="polite">
               {{
@@ -1385,7 +1390,10 @@ export default defineComponent({
               'justify-content-end': !scrollId,
             }"
           >
-            <div class="d-flex justify-content-start my-2 mx-2" v-if="scrollId">
+            <div
+              class="d-flex justify-content-start my-2 mx-2"
+              v-if="scrollUse"
+            >
               <button
                 class="btn btn-normal scroll-btn"
                 @mouseenter="scrollHandler.scrollLeftSide"
@@ -1401,6 +1409,7 @@ export default defineComponent({
                 <i class="mdi mdi-chevron-right"></i>
               </button>
             </div>
+            <div v-else></div>
 
             <div class="d-flex align-items-center">
               <div class="vtl-paging-change-div mx-4 d-flex">
@@ -1433,10 +1442,10 @@ export default defineComponent({
                 </select>
               </div>
 
-              <div class="dataTables_paginate mx-4">
+              <div class="dataTables_paginate">
                 <ul class="vtl-paging-pagination-ul vtl-pagination">
                   <li
-                    v-if="setting.page > 1"
+                    :disable="setting.page <= 1"
                     class="vtl-paging-pagination-page-li vtl-paging-pagination-page-li-first page-item"
                     :class="{ disabled: setting.page <= 1 }"
                   >
@@ -1445,12 +1454,14 @@ export default defineComponent({
                       aria-label="Previous"
                       @click.prevent="setting.page = 1"
                     >
-                      <span aria-hidden="true">&laquo;</span>
+                      <span aria-hidden="true"
+                        ><i class="mdi mdi-chevron-double-left"></i
+                      ></span>
                       <span class="sr-only">First</span>
                     </a>
                   </li>
                   <li
-                    v-if="setting.page > 1"
+                    :disable="setting.page <= 1"
                     class="vtl-paging-pagination-page-li vtl-paging-pagination-page-li-prev page-item"
                     :class="{ disabled: setting.page <= 1 }"
                   >
@@ -1459,7 +1470,9 @@ export default defineComponent({
                       aria-label="Previous"
                       @click.prevent="prevPage"
                     >
-                      <span aria-hidden="true">&lt;</span>
+                      <span aria-hidden="true"
+                        ><i class="mdi mdi-chevron-left"></i
+                      ></span>
                       <span class="sr-only">Prev</span>
                     </a>
                   </li>
@@ -1479,7 +1492,7 @@ export default defineComponent({
                     >
                   </li>
                   <li
-                    v-if="setting.page < setting.maxPage"
+                    :disable="setting.page >= setting.maxPage"
                     class="vtl-paging-pagination-page-li vtl-paging-pagination-page-li-next page-item"
                     :class="{ disabled: setting.page >= setting.maxPage }"
                   >
@@ -1488,12 +1501,14 @@ export default defineComponent({
                       aria-label="Next"
                       @click.prevent="nextPage"
                     >
-                      <span aria-hidden="true">&gt;</span>
+                      <span aria-hidden="true"
+                        ><i class="mdi mdi-chevron-right"></i
+                      ></span>
                       <span class="sr-only">Next</span>
                     </a>
                   </li>
                   <li
-                    v-if="setting.page < setting.maxPage"
+                    :disable="setting.page >= setting.maxPage"
                     class="vtl-paging-pagination-page-li vtl-paging-pagination-page-li-last page-item"
                     :class="{ disabled: setting.page >= setting.maxPage }"
                   >
@@ -1502,7 +1517,9 @@ export default defineComponent({
                       aria-label="Next"
                       @click.prevent="setting.page = setting.maxPage"
                     >
-                      <span aria-hidden="true">&raquo;</span>
+                      <span aria-hidden="true"
+                        ><i class="mdi mdi-chevron-double-right"></i
+                      ></span>
                       <span class="sr-only">Last</span>
                     </a>
                   </li>
@@ -1523,6 +1540,9 @@ export default defineComponent({
 </template>
 
 <style scoped>
+.display-none {
+  display: none !important;
+}
 .vtl-checkbox-th {
   width: 1%;
   min-width: 38px;
@@ -1887,5 +1907,8 @@ tr {
 }
 .scroll-btn {
   padding: 0.3rem 0.45rem;
+}
+.dataTables_paginate {
+  margin-right: 0.5rem;
 }
 </style>
