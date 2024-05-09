@@ -290,6 +290,15 @@ export default defineComponent({
       }
     };
 
+    const resizeEvent = () => {
+      const grip = document.querySelector(".grip-container");
+      const table = document.querySelector(`#${props.id}`);
+      if (grip && table) {
+        const width = grip.style.width;
+        table.style.width = width;
+      }
+    };
+
     const closeLayer = (col: any) => {
       col.showFilter = false;
     };
@@ -939,6 +948,8 @@ export default defineComponent({
           callIsFinished();
         }
 
+        window.addEventListener("resize", resizeEvent);
+
         // 필터 레이어 닫기 이벤트
         window.addEventListener("click", closeFilterLayer);
 
@@ -962,7 +973,7 @@ export default defineComponent({
                   }
                 })
                 .forEach((col: any, index: number) => {
-                  props.columns[index].width = col.style.width;
+                  (props.columns[index] as any).width = col.style.width;
                 });
               nextTick(() => {
                 emit("width-update", props.columns);
@@ -982,6 +993,7 @@ export default defineComponent({
       stopWatch6();
       stopWatch7();
       window.removeEventListener("click", closeFilterLayer);
+      window.removeEventListener("resize", resizeEvent);
       scrollHandler.value?.stopScroll();
       scrollHandler.value = null;
 
@@ -1039,6 +1051,7 @@ export default defineComponent({
             'fixed-first-column': isFixedFirstColumn,
             'fixed-first-second-column': isFixedFirstColumn && hasCheckbox,
           }"
+          :style="`max-height: ${maxHeight}px !important`"
         >
           <div v-if="isLoading" class="vtl-loading-mask">
             <div class="vtl-loading-content">
@@ -1049,7 +1062,6 @@ export default defineComponent({
             :id="id"
             class="vtl-table vtl-table-hover vtl-table-bordered"
             ref="localTable"
-            :style="'max-height: ' + maxHeight + 'px;'"
           >
             <colgroup>
               <col v-if="hasCheckbox" class="vtl-checkbox-th" />
