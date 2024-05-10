@@ -1071,7 +1071,7 @@ export default defineComponent({
                 :style="
                   Object.assign(
                     {
-                      width: col.width || 'auto',
+                      width: col.width || `auto`,
                     },
                     col.headerStylest
                   )
@@ -1572,7 +1572,7 @@ export default defineComponent({
   cursor: pointer;
   background-position: right;
   background-repeat: no-repeat;
-  padding-right: 30px !important;
+  padding-right: 18px !important;
 }
 
 .vtl-asc {
@@ -1613,6 +1613,7 @@ export default defineComponent({
   word-wrap: break-word;
   background-color: #fff;
   background-clip: border-box;
+  border: none;
 }
 
 select {
@@ -1670,7 +1671,7 @@ tr {
 
 .vtl-table td,
 .vtl-table th {
-  padding: 0.75rem !important;
+  padding: 4px 11px !important;
   vertical-align: top;
   border-top: 1px solid #dee2e6;
   vertical-align: middle;
