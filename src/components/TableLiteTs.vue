@@ -259,10 +259,24 @@ export default defineComponent({
     const resizer = ref();
     const checkModel: Ref<any[]> = ref([]);
     let localTable = ref<HTMLElement | null>(null);
+    const enterRow = ref(null);
 
     ////////////////////////////////
 
     ////////////////////////////////
+
+    const onRowClicked = (row: any) => {
+      const dom = document.querySelectorAll(".row-clicked");
+      if (dom) {
+        for (let i = 0; i < dom.length; i++) {
+          dom[i].classList?.remove("row-clicked");
+        }
+      }
+
+      enterRow.value?.classList?.add("row-clicked");
+      emit("row-clicked", row);
+      return;
+    };
 
     const scrollHandler = ref(
       new TableScroll(
@@ -314,44 +328,6 @@ export default defineComponent({
         columnData: col,
       });
     };
-
-    //
-
-    // 넓이 조절
-    const getWidth = (col: any) => {
-      if (col.flex) return "100%";
-      else if (
-        col?.width?.includes("%") &&
-        !col?.width?.includes("px") &&
-        !col.flex
-      )
-        return col.width;
-      else if (
-        !col?.width?.includes("%") &&
-        !col?.width?.includes("px") &&
-        !col.flex
-      )
-        return "auto";
-      return "";
-    };
-
-    const getMinWidth = (col: any) => {
-      if (col.flex) return "";
-      else if (
-        !col?.width?.includes("%") &&
-        col?.width?.includes("px") &&
-        !col.flex
-      )
-        return col.width;
-      else if (
-        !col?.width?.includes("%") &&
-        !col?.width?.includes("px") &&
-        !col.flex
-      )
-        return "auto";
-      return "";
-    };
-
     //
 
     // 檢查下拉選單中是否包含預設一頁顯示筆數 (Validate dropdown's values have page-size value or not)
@@ -888,7 +864,8 @@ export default defineComponent({
      */
     const addHoverClassToTr = (mouseEvent: MouseEvent) => {
       if (mouseEvent.target instanceof HTMLElement) {
-        mouseEvent.target.classList.add("hover");
+        // mouseEvent.target.classList.add("hover");
+        enterRow.value = mouseEvent.target;
       }
     };
 
@@ -899,7 +876,8 @@ export default defineComponent({
      */
     const removeHoverClassFromTr = (mouseEvent: MouseEvent) => {
       if (mouseEvent.target instanceof HTMLElement) {
-        mouseEvent.target.classList.remove("hover");
+        // mouseEvent.target.classList.remove("hover");
+        enterRow.value = null;
       }
     };
 
@@ -948,7 +926,7 @@ export default defineComponent({
           callIsFinished();
         }
 
-        window.addEventListener("resize", resizeEvent);
+        // window.addEventListener("resize", resizeEvent);
 
         // 필터 레이어 닫기 이벤트
         window.addEventListener("click", closeFilterLayer);
@@ -993,7 +971,7 @@ export default defineComponent({
       stopWatch6();
       stopWatch7();
       window.removeEventListener("click", closeFilterLayer);
-      window.removeEventListener("resize", resizeEvent);
+      // window.removeEventListener("resize", resizeEvent);
       scrollHandler.value?.stopScroll();
       scrollHandler.value = null;
 
@@ -1022,13 +1000,12 @@ export default defineComponent({
       addVerticalHighlight,
       removeVerticalHighlight,
       checkState,
-      getWidth,
-      getMinWidth,
       openLayer,
       searchFilter,
       closeLayer,
       scrollHandler,
       sanitize: DOMPurify.default?.sanitize,
+      onRowClicked,
     };
   },
   watch: {
@@ -1061,6 +1038,7 @@ export default defineComponent({
           <table
             :id="id"
             class="vtl-table vtl-table-hover vtl-table-bordered"
+            style="width: inherit"
             ref="localTable"
           >
             <colgroup>
@@ -1236,7 +1214,7 @@ export default defineComponent({
                     "
                     @mouseenter="addHoverClassToTr"
                     @mouseleave="removeHoverClassFromTr"
-                    @click="$emit('row-clicked', row)"
+                    @click="onRowClicked(row)"
                   >
                     <td v-if="hasCheckbox" class="vtl-tbody-td">
                       <div :class="`${checkboxWrapperClass}`">
@@ -1340,7 +1318,7 @@ export default defineComponent({
                     "
                     @mouseenter="addHoverClassToTr"
                     @mouseleave="removeHoverClassFromTr"
-                    @click="$emit('row-clicked', row)"
+                    @click="onRowClicked(row)"
                   >
                     <td v-if="hasCheckbox" class="vtl-tbody-td">
                       <div :class="`${checkboxWrapperClass}`">
