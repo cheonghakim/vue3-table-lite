@@ -1656,10 +1656,10 @@ tr {
   vertical-align: middle;
 }
 
-.vtl-table-hover tbody tr:hover {
+/* .vtl-table-hover tbody tr:hover {
   color: #212529;
   background-color: #ececec;
-}
+} */
 
 .vtl-table-responsive {
   display: block;
