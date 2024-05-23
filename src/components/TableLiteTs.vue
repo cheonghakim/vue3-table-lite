@@ -228,6 +228,9 @@ export default defineComponent({
       type: Function,
       default: null,
     },
+    minHeight: {
+      default: "0",
+    },
     // 設定表格高度 (Table's max height)
     maxHeight: {
       default: "auto",
@@ -259,17 +262,21 @@ export default defineComponent({
     const resizer = ref();
     const checkModel: Ref<any[]> = ref([]);
     let localTable = ref<HTMLElement | null>(null);
-    const enterRow = ref(null);
+    const enterRow: any = ref(null);
 
     ////////////////////////////////
 
     ////////////////////////////////
 
     const onRowClicked = (row: any) => {
-      const dom = document.querySelectorAll(".row-clicked");
-      if (dom) {
-        for (let i = 0; i < dom.length; i++) {
-          dom[i].classList?.remove("row-clicked");
+      // 기존에 선택된 행 해제
+      const root = document.querySelector(`#${props.id}-root`);
+      if (root) {
+        const dom = root.querySelectorAll(".row-clicked");
+        if (dom) {
+          for (let i = 0; i < dom.length; i++) {
+            dom[i].classList?.remove("row-clicked");
+          }
         }
       }
 
@@ -289,11 +296,7 @@ export default defineComponent({
       const id = document.querySelector("#filterRef");
       if (!id) return;
 
-      const filterTargets = [
-        "filter-close-icon",
-        "filter-close",
-        "filter-icon",
-      ];
+      const filterTargets = ["filter-close-icon", "filter-close", "filter-icon"];
       if (
         !filterTargets.includes(evt.target.getAttribute("name")) &&
         !id.contains(evt.target)
@@ -333,9 +336,7 @@ export default defineComponent({
     // 檢查下拉選單中是否包含預設一頁顯示筆數 (Validate dropdown's values have page-size value or not)
     let tmpPageOptions = props.pageOptions as Array<pageOption>;
     let defaultPageSize =
-      props.pageOptions.length > 0
-        ? ref(tmpPageOptions[0].value)
-        : ref(props.pageSize);
+      props.pageOptions.length > 0 ? ref(tmpPageOptions[0].value) : ref(props.pageSize);
     if (tmpPageOptions.length > 0) {
       tmpPageOptions.forEach((v: pageOption) => {
         if (
@@ -455,8 +456,7 @@ export default defineComponent({
 
         result = {} as any;
         for (let index = setting.offset - 1; index < setting.limit; index++) {
-          result[rows[index][props.groupingKey]] =
-            tmp[rows[index][props.groupingKey]];
+          result[rows[index][props.groupingKey]] = tmp[rows[index][props.groupingKey]];
         }
       } else {
         result = [];
@@ -776,8 +776,7 @@ export default defineComponent({
     // Call 「is-finished」 Method
     const callIsFinished = () => {
       if (localTable.value) {
-        let localElement =
-          localTable.value.getElementsByClassName("is-rows-el");
+        let localElement = localTable.value.getElementsByClassName("is-rows-el");
         emit("is-finished", localElement);
       }
       emit("get-now-page", setting.page);
@@ -802,9 +801,7 @@ export default defineComponent({
 
       nextTick(function () {
         if (props.startCollapsed || props.isKeepCollapsed) {
-          for (const [groupIndex, el] of Object.entries(
-            toggleButtonRefs.value
-          )) {
+          for (const [groupIndex, el] of Object.entries(toggleButtonRefs.value)) {
             if (el && el.parentElement) {
               let isOpen = !props.startCollapsed;
               if (
@@ -944,9 +941,7 @@ export default defineComponent({
             onResize: (evt: any) => {
               resizer.value.tb.columns
                 .filter((col: any) => {
-                  if (
-                    col.getAttribute("class")?.includes("checkbox") === false
-                  ) {
+                  if (col.getAttribute("class")?.includes("checkbox") === false) {
                     return col;
                   }
                 })
@@ -1018,7 +1013,7 @@ export default defineComponent({
 
 <template>
   <!-- eslint-disable @typescript-eslint/no-explicit-any -->
-  <div class="vtl vtl-card">
+  <div class="vtl vtl-card" :id="`${id}-root`">
     <div class="vtl-card-title" v-if="title" :id="scrollId">{{ title }}</div>
     <div class="vtl-card-body">
       <div class="vtl-row">
@@ -1028,7 +1023,7 @@ export default defineComponent({
             'fixed-first-column': isFixedFirstColumn,
             'fixed-first-second-column': isFixedFirstColumn && hasCheckbox,
           }"
-          :style="`max-height: ${maxHeight}px !important`"
+          :style="`max-height: ${maxHeight}px !important; min-height: ${minHeight}px !important;`"
         >
           <div v-if="isLoading" class="vtl-loading-mask">
             <div class="vtl-loading-content">
@@ -1081,11 +1076,9 @@ export default defineComponent({
                       :class="{
                         'vtl-sortable': col.sortable,
                         'vtl-both': col.sortable,
-                        'vtl-asc':
-                          setting.order === col.field && setting.sort === 'asc',
+                        'vtl-asc': setting.order === col.field && setting.sort === 'asc',
                         'vtl-desc':
-                          setting.order === col.field &&
-                          setting.sort === 'desc',
+                          setting.order === col.field && setting.sort === 'desc',
                       }"
                       @click.prevent="col.sortable ? doSort(col.field) : false"
                       v-html="sanitize(col.label)"
@@ -1110,9 +1103,7 @@ export default defineComponent({
                               class="d-flex align-items-center justify-content-between mb-2"
                             >
                               <div>
-                                <span class="fs-14 fw-600"
-                                  >{{ col.label }} 검색</span
-                                >
+                                <span class="fs-14 fw-600">{{ col.label }} 검색</span>
                               </div>
                               <div
                                 @click="closeLayer(col)"
@@ -1154,22 +1145,15 @@ export default defineComponent({
               <tbody
                 v-if="isStaticMode"
                 class="vtl-tbody"
-                :set="
-                  (templateRows = groupingKey == '' ? [localRows] : localRows)
-                "
+                :set="(templateRows = groupingKey == '' ? [localRows] : localRows)"
               >
                 <template
                   v-for="(rows, groupingIndex) in templateRows"
                   :key="groupingIndex"
                 >
-                  <tr
-                    v-if="groupingKey != ''"
-                    class="vtl-tbody-tr vtl-group-tr"
-                  >
+                  <tr v-if="groupingKey != ''" class="vtl-tbody-tr vtl-group-tr">
                     <td
-                      :colspan="
-                        hasCheckbox ? columns.length + 1 : columns.length
-                      "
+                      :colspan="hasCheckbox ? columns.length + 1 : columns.length"
                       class="vtl-tbody-td vtl-group-td"
                     >
                       <div class="flex">
@@ -1177,9 +1161,7 @@ export default defineComponent({
                           <a
                             :ref="(el: any) => (toggleButtonRefs[groupingIndex] as any) = el"
                             class="cursor-pointer"
-                            @click.prevent="
-                              toggleGroup(groupingIndex.toString())
-                            "
+                            @click.prevent="toggleGroup(groupingIndex.toString())"
                             >▼</a
                           >
                         </div>
@@ -1208,9 +1190,7 @@ export default defineComponent({
                     :name="'vtl-group-' + groupingIndex"
                     class="vtl-tbody-tr"
                     :class="
-                      typeof rowClasses === 'function'
-                        ? rowClasses(row)
-                        : rowClasses
+                      typeof rowClasses === 'function' ? rowClasses(row) : rowClasses
                     "
                     @mouseenter="addHoverClassToTr"
                     @mouseleave="removeHoverClassFromTr"
@@ -1242,10 +1222,7 @@ export default defineComponent({
                       @mouseover="addVerticalHighlight(j)"
                       @mouseleave="removeVerticalHighlight(j)"
                     >
-                      <div
-                        v-if="col.display"
-                        v-html="sanitize(col.display(row))"
-                      ></div>
+                      <div v-if="col.display" v-html="sanitize(col.display(row))"></div>
                       <div v-else>
                         <div v-if="setting.isSlotMode && slots[col.field]">
                           <slot :name="col.field" :value="row"></slot>
@@ -1258,22 +1235,15 @@ export default defineComponent({
               </tbody>
               <tbody
                 v-else
-                :set="
-                  (templateRows = groupingKey == '' ? [rows] : groupingRows)
-                "
+                :set="(templateRows = groupingKey == '' ? [rows] : groupingRows)"
               >
                 <template
                   v-for="(rows, groupingIndex) in templateRows"
                   :key="groupingIndex"
                 >
-                  <tr
-                    v-if="groupingKey != ''"
-                    class="vtl-tbody-tr vtl-group-tr"
-                  >
+                  <tr v-if="groupingKey != ''" class="vtl-tbody-tr vtl-group-tr">
                     <td
-                      :colspan="
-                        hasCheckbox ? columns.length + 1 : columns.length
-                      "
+                      :colspan="hasCheckbox ? columns.length + 1 : columns.length"
                       class="vtl-tbody-td vtl-group-td"
                     >
                       <div class="flex">
@@ -1281,9 +1251,7 @@ export default defineComponent({
                           <a
                             :ref="(el: any) => (toggleButtonRefs[groupingIndex] as any) = el"
                             class="cursor-pointer"
-                            @click.prevent="
-                              toggleGroup(groupingIndex.toString())
-                            "
+                            @click.prevent="toggleGroup(groupingIndex.toString())"
                             >▼</a
                           >
                         </div>
@@ -1312,9 +1280,7 @@ export default defineComponent({
                     :key="row[setting.keyColumn] ? row[setting.keyColumn] : i"
                     class="vtl-tbody-tr"
                     :class="
-                      typeof rowClasses === 'function'
-                        ? rowClasses(row)
-                        : rowClasses
+                      typeof rowClasses === 'function' ? rowClasses(row) : rowClasses
                     "
                     @mouseenter="addHoverClassToTr"
                     @mouseleave="removeHoverClassFromTr"
@@ -1342,10 +1308,7 @@ export default defineComponent({
                       @mouseover="addVerticalHighlight(j)"
                       @mouseleave="removeVerticalHighlight(j)"
                     >
-                      <div
-                        v-if="col.display"
-                        v-html="sanitize(col.display(row))"
-                      ></div>
+                      <div v-if="col.display" v-html="sanitize(col.display(row))"></div>
                       <div v-else>
                         <div v-if="setting.isSlotMode && slots[col.field]">
                           <slot :name="col.field" :value="row"></slot>
@@ -1381,10 +1344,7 @@ export default defineComponent({
               'justify-content-end': !scrollId,
             }"
           >
-            <div
-              class="d-flex justify-content-start my-2 mx-2"
-              v-if="scrollUse"
-            >
+            <div class="d-flex justify-content-start my-2 mx-2" v-if="scrollUse">
               <button
                 class="btn btn-normal scroll-btn"
                 @mouseenter="scrollHandler.scrollLeftSide"
@@ -1407,10 +1367,7 @@ export default defineComponent({
                 <span class="vtl-paging-count-label">{{
                   messages.pageSizeChangeLabel
                 }}</span>
-                <select
-                  class="vtl-paging-count-dropdown"
-                  v-model="setting.pageSize"
-                >
+                <select class="vtl-paging-count-dropdown" v-model="setting.pageSize">
                   <option
                     v-for="pageOption in (pageOptions as Array<pageOption>)"
                     :value="pageOption.value"
@@ -1419,9 +1376,7 @@ export default defineComponent({
                     {{ pageOption.text }}
                   </option>
                 </select>
-                <span class="vtl-paging-page-label">{{
-                  messages.gotoPageLabel
-                }}</span>
+                <span class="vtl-paging-page-label">{{ messages.gotoPageLabel }}</span>
                 <select class="vtl-paging-page-dropdown" v-model="setting.page">
                   <option
                     v-for="n in setting.maxPage"
@@ -1461,9 +1416,7 @@ export default defineComponent({
                       aria-label="Previous"
                       @click.prevent="prevPage"
                     >
-                      <span aria-hidden="true"
-                        ><i class="mdi mdi-chevron-left"></i
-                      ></span>
+                      <span aria-hidden="true"><i class="mdi mdi-chevron-left"></i></span>
                       <span class="sr-only">Prev</span>
                     </a>
                   </li>
@@ -1630,10 +1583,10 @@ tr {
   border-color: inherit;
 }
 
-.vtl-table-bordered thead td,
+/* .vtl-table-bordered thead td,
 .vtl-table-bordered thead th {
   border-bottom-width: 2px;
-}
+} */
 
 .vtl-table thead th {
   vertical-align: bottom;
@@ -1646,13 +1599,22 @@ tr {
 .vtl-table-bordered td,
 .vtl-table-bordered th {
   border: 1px solid #dee2e6;
+  border-top: 0px;
+}
+
+.vtl-table-bordered th:first-child {
+  border-left: 0px;
+}
+
+.vtl-table-bordered th:last-child {
+  border-right: 0px;
 }
 
 .vtl-table td,
 .vtl-table th {
   padding: 4px 11px !important;
   vertical-align: top;
-  border-top: 1px solid #dee2e6;
+  /* border-top: 1px solid #dee2e6; */
   vertical-align: middle;
 }
 
