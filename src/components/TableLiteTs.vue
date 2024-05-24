@@ -69,6 +69,10 @@ export default defineComponent({
     "width-update": (_columns: any) => true,
   },
   props: {
+    multiple: {
+      type: Boolean,
+      default: true,
+    },
     resizeOptions: {
       type: Object,
       default: () => {},
@@ -229,7 +233,7 @@ export default defineComponent({
       default: null,
     },
     minHeight: {
-      default: "auto",
+      default: "0",
     },
     // 設定表格高度 (Table's max height)
     maxHeight: {
@@ -553,10 +557,21 @@ export default defineComponent({
       if (props.checkedReturnType == "row") {
         checkboxValue = row;
       }
+
+      // 체크!
       if ((event.target as HTMLInputElement).checked) {
-        isChecked.value.push(checkboxValue);
-        checkModel.value.push(row);
+        if (props.multiple) {
+          isChecked.value.push(checkboxValue);
+          checkModel.value.push(row);
+        } else {
+          isChecked.value = null;
+          checkModel.value = null;
+
+          isChecked.value = [checkboxValue];
+          checkModel.value = [row];
+        }
       } else {
+        // 체크 해제!
         const index = isChecked.value.indexOf(checkboxValue);
         if (index >= 0) {
           isChecked.value.splice(index, 1);
@@ -571,6 +586,8 @@ export default defineComponent({
           }
         }
       }
+
+      // 전체선택 버튼 처리
       if (isChecked.value.length == props.rows.length) {
         if (setting.isCheckAll) {
           emit("return-checked-rows", isChecked.value, checkModel.value);
@@ -1023,7 +1040,7 @@ export default defineComponent({
             'fixed-first-column': isFixedFirstColumn,
             'fixed-first-second-column': isFixedFirstColumn && hasCheckbox,
           }"
-          :style="`max-height: ${maxHeight} !important; min-height: ${minHeight} !important;`"
+          :style="`max-height: ${maxHeight}px !important; min-height: ${minHeight}px !important;`"
         >
           <div v-if="isLoading" class="vtl-loading-mask">
             <div class="vtl-loading-content">
@@ -1057,6 +1074,7 @@ export default defineComponent({
                 <th v-if="hasCheckbox" class="vtl-thead-th vtl-checkbox-th">
                   <div :class="`${checkboxWrapperClass}`">
                     <input
+                      :disabled="!multiple"
                       type="checkbox"
                       class="vtl-thead-checkbox form-check-input cursor-pointer"
                       :indeterminate="setting.isIndeterminate"
