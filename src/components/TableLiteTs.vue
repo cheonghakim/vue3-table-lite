@@ -1064,7 +1064,7 @@ export default defineComponent({
                   Object.assign(
                     {
                       width: col.width || `auto`,
-                      'min-width': col.width < 80 ? `${col.width}px` : '80px',
+                      'min-width': col.width < 100 ? `${col.width}px` : '100px',
                     },
                     col.headerStylest
                   )
