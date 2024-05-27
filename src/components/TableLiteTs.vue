@@ -233,7 +233,7 @@ export default defineComponent({
       default: null,
     },
     minHeight: {
-      default: "0",
+      default: "auto",
     },
     // 設定表格高度 (Table's max height)
     maxHeight: {
@@ -1040,7 +1040,7 @@ export default defineComponent({
             'fixed-first-column': isFixedFirstColumn,
             'fixed-first-second-column': isFixedFirstColumn && hasCheckbox,
           }"
-          :style="`max-height: ${maxHeight}px !important; min-height: ${minHeight}px !important;`"
+          :style="`max-height: ${maxHeight} !important; min-height: ${minHeight} !important;`"
         >
           <div v-if="isLoading" class="vtl-loading-mask">
             <div class="vtl-loading-content">
