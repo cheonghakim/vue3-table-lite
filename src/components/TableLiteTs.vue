@@ -1040,7 +1040,9 @@ export default defineComponent({
             'fixed-first-column': isFixedFirstColumn,
             'fixed-first-second-column': isFixedFirstColumn && hasCheckbox,
           }"
-          :style="`max-height: ${maxHeight} !important; min-height: ${minHeight} !important;`"
+          :style="`max-height: ${maxHeight} !important; min-height: ${
+            rows.length === 0 ? '0px' : minHeight
+          } !important;`"
         >
           <div v-if="isLoading" class="vtl-loading-mask">
             <div class="vtl-loading-content">
@@ -1492,7 +1494,10 @@ export default defineComponent({
         </template>
       </div>
       <div class="vtl-row" v-else>
-        <div class="vtl-empty-msg col-sm-12 text-center">
+        <div
+          class="vtl-empty-msg col-sm-12 text-center"
+          :style="`min-height: ${rows.length === 0 ? minHeight : '0px'} !important;`"
+        >
           {{ messages.noDataAvailable }}
         </div>
       </div>
