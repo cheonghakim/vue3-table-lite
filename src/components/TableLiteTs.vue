@@ -48,7 +48,7 @@ export default defineComponent({
   name: "my-table",
   emits: {
     // eslint-disable-next-line
-    "return-checked-rows": (_rows: any[], _rowModel: any[]) => true,
+    "return-checked-rows": (_rowModel: any[]) => true,
     // eslint-disable-next-line
     "do-search": (
       _offset: number,
@@ -233,7 +233,7 @@ export default defineComponent({
       default: null,
     },
     minHeight: {
-      default: "auto",
+      default: "0",
     },
     // 設定表格高度 (Table's max height)
     maxHeight: {
@@ -264,7 +264,7 @@ export default defineComponent({
   },
   setup(props, { emit, slots }) {
     const resizer = ref();
-    const checkModel: Ref<any[]> = ref([]);
+
     let localTable = ref<HTMLElement | null>(null);
     const enterRow: any = ref(null);
 
@@ -430,7 +430,7 @@ export default defineComponent({
     });
 
     // 已選擇中的資料 (Checked rows)
-    const isChecked = ref<Array<any>>([]);
+    const checkModel = ref<Array<any>>([]);
 
     // 組件內用資料 (Data rows for local)
     const localRows = computed(() => {
@@ -502,20 +502,20 @@ export default defineComponent({
       (state: boolean) => {
         if (props.hasCheckbox) {
           setting.isIndeterminate = false;
-          isChecked.value = [];
+          checkModel.value = [];
           if (state) {
             let tmpRows = props.isStaticMode
               ? props.rows.slice(setting.offset - 1, setting.limit)
               : props.rows;
             if (props.checkedReturnType == "row") {
-              isChecked.value = tmpRows
+              checkModel.value = tmpRows
                 .map((val: any) => {
                   if (!val.disabled) return val;
                   else return null;
                 })
                 .filter((item: any) => item);
             } else {
-              isChecked.value = tmpRows
+              checkModel.value = tmpRows
                 .map((val: any) => {
                   if (!val.disabled) return val;
                   else return null;
@@ -529,7 +529,7 @@ export default defineComponent({
             }
           });
           // 回傳畫面上選上的資料 (Return the selected data on the screen)
-          emit("return-checked-rows", isChecked.value, checkModel.value);
+          emit("return-checked-rows", checkModel.value);
         }
       }
     );
@@ -546,6 +546,27 @@ export default defineComponent({
       }
     );
 
+    const checkDup = (data: any) => {
+      for (let i = 0; i < checkModel.value.length; i++) {
+        const item = checkModel.value[i];
+        const check = isEqual(item, data);
+        if (check) return check;
+      }
+      return false;
+    };
+
+    const getCheckedIndex = (data: any) => {
+      for (let i = 0; i < checkModel.value.length; i++) {
+        const item = checkModel.value[i];
+        const check = isEqual(item, data);
+        if (check) {
+          return i;
+        }
+      }
+
+      return -1;
+    };
+
     /**
      * Checkbox點擊事件 (Checkbox click event)
      */
@@ -561,44 +582,34 @@ export default defineComponent({
       // 체크!
       if ((event.target as HTMLInputElement).checked) {
         if (props.multiple) {
-          isChecked.value.push(checkboxValue);
-          checkModel.value.push(row);
+          if (!checkDup(checkboxValue)) checkModel.value.push(checkboxValue);
         } else {
-          isChecked.value = null;
           checkModel.value = null;
-
-          isChecked.value = [checkboxValue];
-          checkModel.value = [row];
+          checkModel.value = [checkboxValue];
         }
       } else {
         // 체크 해제!
-        const index = isChecked.value.indexOf(checkboxValue);
+        const index = getCheckedIndex(checkboxValue);
         if (index >= 0) {
-          isChecked.value.splice(index, 1);
+          checkModel.value.splice(index, 1);
         }
-        if (isChecked.value.length === 0) clearChecked();
 
-        for (let i = 0; i < checkModel.value.length; i++) {
-          const item = checkModel.value[i];
-          const check = isEqual(item, row);
-          if (check) {
-            checkModel.value.splice(i, 1);
-          }
-        }
+        // 전체 체크박스 상태 변경
+        if (checkModel.value.length === 0) clearChecked();
       }
 
       // 전체선택 버튼 처리
-      if (isChecked.value.length == props.rows.length) {
+      if (checkModel.value.length == props.rows.length) {
         if (setting.isCheckAll) {
-          emit("return-checked-rows", isChecked.value, checkModel.value);
+          emit("return-checked-rows", checkModel.value);
         }
         setting.isCheckAll = true;
       } else {
-        if (isChecked.value.length > 0) {
+        if (checkModel.value.length > 0) {
           setting.isIndeterminate = true;
         }
         // 回傳畫面上選上的資料 (Return the selected data on the screen)
-        emit("return-checked-rows", isChecked.value, checkModel.value);
+        emit("return-checked-rows", checkModel.value);
       }
     };
 
@@ -607,14 +618,14 @@ export default defineComponent({
      */
     const clearChecked = () => {
       setting.isCheckAll = false;
-      isChecked.value = [];
+      checkModel.value = [];
       rowCheckbox.value.forEach((val: HTMLInputElement) => {
         if (val && val.checked) {
           val.checked = false;
         }
       });
       // 回傳畫面上選上的資料 (Return the selected data on the screen)
-      emit("return-checked-rows", isChecked.value, checkModel.value);
+      emit("return-checked-rows", checkModel.value);
     };
 
     ////////////////////////////
@@ -661,7 +672,7 @@ export default defineComponent({
       setting.isCheckAll = false;
       setting.isIndeterminate = false;
       if (props.hasCheckbox) {
-        isChecked.value = [];
+        checkModel.value = [];
       }
       let order = setting.order;
       let sort = setting.sort;
@@ -1040,9 +1051,7 @@ export default defineComponent({
             'fixed-first-column': isFixedFirstColumn,
             'fixed-first-second-column': isFixedFirstColumn && hasCheckbox,
           }"
-          :style="`max-height: ${maxHeight} !important; min-height: ${
-            rows.length === 0 ? '0px' : minHeight
-          } !important;`"
+          :style="`max-height: ${maxHeight}px !important; min-height: ${minHeight}px !important;`"
         >
           <div v-if="isLoading" class="vtl-loading-mask">
             <div class="vtl-loading-content">
@@ -1064,7 +1073,7 @@ export default defineComponent({
                   Object.assign(
                     {
                       width: col.width || `auto`,
-                      'min-width': col.width < 100 ? `${col.width}px` : '100px',
+                      'min-width': col.width < 80 ? `${col.width}px` : '80px',
                     },
                     col.headerStylest
                   )
@@ -1494,12 +1503,7 @@ export default defineComponent({
         </template>
       </div>
       <div class="vtl-row" v-else>
-        <div
-          class="vtl-empty-msg col-sm-12 text-center"
-          :style="`min-height: ${
-            rows.length === 0 ? parseInt(minHeight) - 28.5 + 'px' : '0px'
-          } !important;`"
-        >
+        <div class="vtl-empty-msg col-sm-12 text-center">
           {{ messages.noDataAvailable }}
         </div>
       </div>
