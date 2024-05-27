@@ -1496,7 +1496,9 @@ export default defineComponent({
       <div class="vtl-row" v-else>
         <div
           class="vtl-empty-msg col-sm-12 text-center"
-          :style="`min-height: ${rows.length === 0 ? minHeight : '0px'} !important;`"
+          :style="`min-height: ${
+            rows.length === 0 ? parseInt(minHeight) - 28.5 + 'px' : '0px'
+          } !important;`"
         >
           {{ messages.noDataAvailable }}
         </div>
