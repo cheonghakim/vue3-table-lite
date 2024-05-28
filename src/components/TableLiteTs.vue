@@ -3,7 +3,7 @@ import ColumnResizer from "column-resizer/src/ColumnResizer.js";
 import * as DOMPurify from "dompurify";
 import { TableScroll } from "../tableScroll";
 import { isEqual } from "lodash-es";
-import { onUnmounted } from "vue";
+import { onUnmounted, nextTick } from "vue";
 import {
   defineComponent,
   ref,
@@ -11,7 +11,6 @@ import {
   computed,
   watch,
   onBeforeUpdate,
-  nextTick,
   onMounted,
   Ref,
 } from "vue";
@@ -233,7 +232,7 @@ export default defineComponent({
       default: null,
     },
     minHeight: {
-      default: "0",
+      default: "auto",
     },
     // 設定表格高度 (Table's max height)
     maxHeight: {
@@ -264,8 +263,9 @@ export default defineComponent({
   },
   setup(props, { emit, slots }) {
     const resizer = ref();
-
+    const emptyArea = ref<HTMLElement | null>(null);
     let localTable = ref<HTMLElement | null>(null);
+    const tableArea = ref<HTMLElement | null>(null);
     const enterRow: any = ref(null);
 
     ////////////////////////////////
@@ -942,6 +942,41 @@ export default defineComponent({
       }
     };
 
+    const heightWatch = watch(
+      () => props.rows,
+      (val: any) => {
+        // 높이 설정
+        nextTick(() => {
+          if (localTable.value) {
+            if (emptyArea.value && props.rows.length === 0) {
+              const tableHeight = localTable.value.offsetHeight || 0;
+              const emptyMaxHeight =
+                props.maxHeight === "auto"
+                  ? "auto"
+                  : parseInt(props.maxHeight) - tableHeight + "px";
+              const emptyMinHeight =
+                props.minHeight === "auto"
+                  ? "auto"
+                  : parseInt(props.minHeight) - tableHeight + "px";
+              emptyArea.value?.setAttribute(
+                "style",
+                `min-height: ${emptyMinHeight}; max-height: ${emptyMaxHeight}`
+              );
+            } else if (tableArea.value && props.rows?.length > 0) {
+              const minHeight = props.minHeight === "auto" ? "auto" : props.minHeight;
+              const maxHeight = props.maxHeight === "auto" ? "auto" : props.maxHeight;
+
+              tableArea.value?.setAttribute(
+                "style",
+                `min-height: ${minHeight}; max-height: ${maxHeight}`
+              );
+            }
+          }
+        });
+      },
+      { immediate: true }
+    );
+
     /**
      * 組件掛載後事件 (Mounted Event)
      */
@@ -993,6 +1028,7 @@ export default defineComponent({
       stopWatch5();
       stopWatch6();
       stopWatch7();
+      heightWatch();
       window.removeEventListener("click", closeFilterLayer);
       // window.removeEventListener("resize", resizeEvent);
       scrollHandler.value?.stopScroll();
@@ -1004,6 +1040,8 @@ export default defineComponent({
     return {
       slots,
       localTable,
+      emptyArea,
+      tableArea,
       localRows,
       setting,
       rowCheckbox,
@@ -1051,7 +1089,7 @@ export default defineComponent({
             'fixed-first-column': isFixedFirstColumn,
             'fixed-first-second-column': isFixedFirstColumn && hasCheckbox,
           }"
-          :style="`max-height: ${maxHeight}px !important; min-height: ${minHeight}px !important;`"
+          ref="tableArea"
         >
           <div v-if="isLoading" class="vtl-loading-mask">
             <div class="vtl-loading-content">
@@ -1502,7 +1540,7 @@ export default defineComponent({
           </div>
         </template>
       </div>
-      <div class="vtl-row" v-else>
+      <div class="vtl-row" ref="emptyArea" v-else>
         <div class="vtl-empty-msg col-sm-12 text-center">
           {{ messages.noDataAvailable }}
         </div>
@@ -1596,7 +1634,7 @@ table {
 
 .vtl-table {
   width: 100%;
-  margin-bottom: 1rem;
+  /* margin-bottom: 1rem; */
   color: #212529;
   border-collapse: collapse;
 }
