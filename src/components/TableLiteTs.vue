@@ -958,6 +958,7 @@ export default defineComponent({
                 props.minHeight === "auto"
                   ? "auto"
                   : parseInt(props.minHeight) - tableHeight + "px";
+              tableArea.value?.setAttribute("style", `min-height: 0px; max-height: 0px`);
               emptyArea.value?.setAttribute(
                 "style",
                 `min-height: ${emptyMinHeight}; max-height: ${emptyMaxHeight}`
@@ -966,6 +967,7 @@ export default defineComponent({
               const minHeight = props.minHeight === "auto" ? "auto" : props.minHeight;
               const maxHeight = props.maxHeight === "auto" ? "auto" : props.maxHeight;
 
+              emptyArea.value?.setAttribute("style", `min-height: 0px; max-height: 0px;`);
               tableArea.value?.setAttribute(
                 "style",
                 `min-height: ${minHeight}; max-height: ${maxHeight}`
