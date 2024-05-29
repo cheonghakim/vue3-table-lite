@@ -959,6 +959,11 @@ export default defineComponent({
                   ? "auto"
                   : parseInt(props.minHeight) - tableHeight + "px";
 
+              // 초기화
+              tableArea.value?.setAttribute(
+                "style",
+                `min-height: ${tableHeight}; max-height: ${tableHeight};`
+              );
               emptyArea.value?.setAttribute(
                 "style",
                 `min-height: ${emptyMinHeight}; max-height: ${emptyMaxHeight}`
@@ -999,7 +1004,7 @@ export default defineComponent({
           resizer.value = new ColumnResizer(table, {
             headerOnly: true,
             liveDrag: true,
-            resizeMode: "fit",
+            resizeMode: "overflow",
             disabledColumns: props.hasCheckbox ? [0] : [], // 특정 컬럼을 안쓰려면 여기를 수정
             ...props.resizeOptions,
             serialize: false,
