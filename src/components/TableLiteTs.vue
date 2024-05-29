@@ -263,6 +263,7 @@ export default defineComponent({
   },
   setup(props, { emit, slots }) {
     const resizer = ref();
+    const resizerOptions = ref();
     const emptyArea = ref<HTMLElement | null>(null);
     let localTable = ref<HTMLElement | null>(null);
     const tableArea = ref<HTMLElement | null>(null);
@@ -312,11 +313,15 @@ export default defineComponent({
     };
 
     const resizeEvent = () => {
-      const grip = document.querySelector(".grip-container");
       const table = document.querySelector(`#${props.id}`);
-      if (grip && table) {
-        const width = grip.style.width;
-        table.style.width = width;
+
+      if (table) {
+        const { width } = table.getBoundingClientRect();
+        if (width > 0) {
+          resizerOptions.value.minWidth = width;
+          console.log(width);
+          resizer.value.reset(resizerOptions.value);
+        }
       }
     };
 
@@ -1000,12 +1005,14 @@ export default defineComponent({
 
         // col resize
         const table = document.querySelector(`#${props.id}`);
+        const root = document.querySelector(`#root-${props.id}`);
+        const { width } = root?.getBoundingClientRect() || null;
         if (table) {
-          resizer.value = new ColumnResizer(table, {
+          resizerOptions.value = {
             headerOnly: true,
             liveDrag: true,
             resizeMode: "overflow",
-            minWidth: table.offsetWidth || null,
+            minWidth: width,
             disabledColumns: props.hasCheckbox ? [0] : [], // 특정 컬럼을 안쓰려면 여기를 수정
             ...props.resizeOptions,
             serialize: false,
@@ -1023,7 +1030,8 @@ export default defineComponent({
                 emit("width-update", props.columns);
               });
             },
-          });
+          };
+          resizer.value = new ColumnResizer(table, resizerOptions.value);
         }
       });
     });
@@ -1038,7 +1046,7 @@ export default defineComponent({
       stopWatch7();
       heightWatch();
       window.removeEventListener("click", closeFilterLayer);
-      // window.removeEventListener("resize", resizeEvent);
+      //window.removeEventListener("resize", resizeEvent);
       scrollHandler.value?.stopScroll();
       scrollHandler.value = null;
 
