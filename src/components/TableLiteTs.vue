@@ -262,16 +262,6 @@ export default defineComponent({
     },
   },
   setup(props, { emit, slots }) {
-    const uuid = () => {
-      const s4 = () => {
-        return (((1 + Math.random()) * 0x10000) | 0).toString(16).substring(1);
-      };
-      return [s4(), s4(), "-", s4(), "-", s4(), "-", s4(), "-", s4(), s4(), s4()].join(
-        ""
-      );
-    };
-
-    const tableKey = ref(uuid());
     const resizer = ref();
     const resizerOptions = ref();
     const emptyArea = ref<HTMLElement | null>(null);
@@ -323,7 +313,12 @@ export default defineComponent({
     };
 
     const resizeEvent = () => {
-      tableKey.value = uuid();
+      const root = document.querySelector(`#${props.id}-root`);
+      if (root && localTable.value) {
+        const { width } = root?.getBoundingClientRect() || null;
+        localTable.value?.setAttribute("style", `width: ${width}px !important`);
+        resizer.value.reset(resizerOptions.value);
+      }
     };
 
     const closeLayer = (col: any) => {
@@ -1015,7 +1010,7 @@ export default defineComponent({
             headerOnly: true,
             liveDrag: true,
             resizeMode: "overflow",
-            minWidth: width,
+            // minWidth: width,
             disabledColumns: props.hasCheckbox ? [0] : [], // 특정 컬럼을 안쓰려면 여기를 수정
             ...props.resizeOptions,
             serialize: false,
@@ -1086,7 +1081,6 @@ export default defineComponent({
       scrollHandler,
       sanitize: DOMPurify.default?.sanitize,
       onRowClicked,
-      tableKey,
     };
   },
   watch: {
@@ -1099,7 +1093,7 @@ export default defineComponent({
 
 <template>
   <!-- eslint-disable @typescript-eslint/no-explicit-any -->
-  <div class="vtl vtl-card" :id="`${id}-root`" :key="tableKey">
+  <div class="vtl vtl-card" :id="`${id}-root`">
     <div class="vtl-card-title" v-if="title" :id="scrollId">{{ title }}</div>
     <div class="vtl-card-body">
       <div class="vtl-row">
@@ -1951,5 +1945,8 @@ tr {
 }
 .dataTables_paginate {
   margin-right: 0.5rem;
+}
+.grip-handle .grip-resizable {
+  width: 2px;
 }
 </style>
