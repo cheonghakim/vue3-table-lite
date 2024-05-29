@@ -262,6 +262,16 @@ export default defineComponent({
     },
   },
   setup(props, { emit, slots }) {
+    const uuid = () => {
+      const s4 = () => {
+        return (((1 + Math.random()) * 0x10000) | 0).toString(16).substring(1);
+      };
+      return [s4(), s4(), "-", s4(), "-", s4(), "-", s4(), "-", s4(), s4(), s4()].join(
+        ""
+      );
+    };
+
+    const tableKey = ref(uuid());
     const resizer = ref();
     const resizerOptions = ref();
     const emptyArea = ref<HTMLElement | null>(null);
@@ -313,16 +323,7 @@ export default defineComponent({
     };
 
     const resizeEvent = () => {
-      const table = document.querySelector(`#${props.id}`);
-
-      if (table) {
-        const { width } = table.getBoundingClientRect();
-        if (width > 0) {
-          resizerOptions.value.minWidth = width;
-          console.log(width);
-          resizer.value.reset(resizerOptions.value);
-        }
-      }
+      tableKey.value = uuid();
     };
 
     const closeLayer = (col: any) => {
@@ -998,15 +999,17 @@ export default defineComponent({
           callIsFinished();
         }
 
-        // window.addEventListener("resize", resizeEvent);
+        window.addEventListener("resize", resizeEvent);
 
         // 필터 레이어 닫기 이벤트
         window.addEventListener("click", closeFilterLayer);
 
         // col resize
         const table = document.querySelector(`#${props.id}`);
-        const root = document.querySelector(`#root-${props.id}`);
+        const root = document.querySelector(`#${props.id}-root`);
+
         const { width } = root?.getBoundingClientRect() || null;
+
         if (table) {
           resizerOptions.value = {
             headerOnly: true,
@@ -1046,7 +1049,7 @@ export default defineComponent({
       stopWatch7();
       heightWatch();
       window.removeEventListener("click", closeFilterLayer);
-      //window.removeEventListener("resize", resizeEvent);
+      window.removeEventListener("resize", resizeEvent);
       scrollHandler.value?.stopScroll();
       scrollHandler.value = null;
 
@@ -1083,6 +1086,7 @@ export default defineComponent({
       scrollHandler,
       sanitize: DOMPurify.default?.sanitize,
       onRowClicked,
+      tableKey,
     };
   },
   watch: {
@@ -1095,7 +1099,7 @@ export default defineComponent({
 
 <template>
   <!-- eslint-disable @typescript-eslint/no-explicit-any -->
-  <div class="vtl vtl-card" :id="`${id}-root`">
+  <div class="vtl vtl-card" :id="`${id}-root`" :key="tableKey">
     <div class="vtl-card-title" v-if="title" :id="scrollId">{{ title }}</div>
     <div class="vtl-card-body">
       <div class="vtl-row">
