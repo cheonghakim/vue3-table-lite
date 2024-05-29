@@ -958,7 +958,7 @@ export default defineComponent({
                 props.minHeight === "auto"
                   ? "auto"
                   : parseInt(props.minHeight) - tableHeight + "px";
-              tableArea.value?.setAttribute("style", `min-height: 0px; max-height: 0px`);
+
               emptyArea.value?.setAttribute(
                 "style",
                 `min-height: ${emptyMinHeight}; max-height: ${emptyMaxHeight}`
@@ -966,7 +966,7 @@ export default defineComponent({
             } else if (tableArea.value && props.rows?.length > 0) {
               const minHeight = props.minHeight === "auto" ? "auto" : props.minHeight;
               const maxHeight = props.maxHeight === "auto" ? "auto" : props.maxHeight;
-
+              // 초기화
               emptyArea.value?.setAttribute("style", `min-height: 0px; max-height: 0px;`);
               tableArea.value?.setAttribute(
                 "style",
