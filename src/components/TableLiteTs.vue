@@ -1005,6 +1005,7 @@ export default defineComponent({
             headerOnly: true,
             liveDrag: true,
             resizeMode: "overflow",
+            minWidth: table.offsetWidth || null,
             disabledColumns: props.hasCheckbox ? [0] : [], // 특정 컬럼을 안쓰려면 여기를 수정
             ...props.resizeOptions,
             serialize: false,
