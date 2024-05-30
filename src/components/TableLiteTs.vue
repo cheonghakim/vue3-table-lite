@@ -314,9 +314,10 @@ export default defineComponent({
 
     const resizeEvent = () => {
       const root = document.querySelector(`#${props.id}-root`);
-      if (root && localTable.value) {
-        const { width } = root?.getBoundingClientRect() || null;
-        localTable.value?.setAttribute("style", `width: ${width}px !important`);
+      if (root) {
+        // const { width } = root?.getBoundingClientRect() || null;
+        // console.log(width)
+        // localTable.value?.setAttribute("style", `width: ${width}px !important`);
         resizer.value.reset(resizerOptions.value);
       }
     };
@@ -1113,7 +1114,7 @@ export default defineComponent({
           <table
             :id="id"
             class="vtl-table vtl-table-hover vtl-table-bordered"
-            style="width: inherit"
+            style="width: 100% !important"
             ref="localTable"
           >
             <colgroup>
@@ -1647,7 +1648,7 @@ table {
 }
 
 .vtl-table {
-  width: 100%;
+  width: 100% !important;
   /* margin-bottom: 1rem; */
   color: #212529;
   border-collapse: collapse;
