@@ -950,7 +950,7 @@ export default defineComponent({
         nextTick(() => {
           if (localTable.value) {
             if (emptyArea.value && props.rows.length === 0) {
-              const tableHeight = localTable.value.offsetHeight || 0;
+              const tableHeight = localTable.value.offsetHeight || 30;
               const emptyMaxHeight =
                 props.maxHeight === "auto"
                   ? "auto"
