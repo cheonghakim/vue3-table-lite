@@ -264,9 +264,11 @@ export default defineComponent({
   setup(props, { emit, slots }) {
     const resizer = ref();
     const resizerOptions = ref();
-    const emptyArea = ref<HTMLElement | null>(null);
+    const emptyHeight = ref();
     let localTable = ref<HTMLElement | null>(null);
-    const tableArea = ref<HTMLElement | null>(null);
+    const tableHeader = ref<HTMLElement | null>(null);
+    const rootTable = ref<HTMLElement | null>(null);
+
     const enterRow: any = ref(null);
 
     ////////////////////////////////
@@ -947,43 +949,21 @@ export default defineComponent({
     const heightWatch = watch(
       () => props.rows,
       (val: any) => {
-        // 높이 설정
         nextTick(() => {
-          if (localTable.value) {
-            if (emptyArea.value && props.rows.length === 0) {
-              const tableHeight = localTable.value.offsetHeight || 30;
-              const emptyMaxHeight =
-                props.maxHeight === "auto"
-                  ? "auto"
-                  : parseInt(props.maxHeight) - tableHeight + "px";
-              const emptyMinHeight =
-                props.minHeight === "auto"
-                  ? "auto"
-                  : parseInt(props.minHeight) - tableHeight + "px";
+          if (rootTable.value && tableHeader.value && props.rows.length === 0) {
+            const rect = tableHeader.value.getBoundingClientRect();
+            const tableRect = rootTable.value.getBoundingClientRect();
 
-              // 초기화
-              tableArea.value?.setAttribute(
-                "style",
-                `min-height: ${tableHeight}; max-height: ${tableHeight};`
-              );
-              emptyArea.value?.setAttribute(
-                "style",
-                `min-height: ${emptyMinHeight}; max-height: ${emptyMaxHeight}`
-              );
-            } else if (tableArea.value && props.rows?.length > 0) {
-              const minHeight = props.minHeight === "auto" ? "auto" : props.minHeight;
-              const maxHeight = props.maxHeight === "auto" ? "auto" : props.maxHeight;
-              // 초기화
-              emptyArea.value?.setAttribute("style", `min-height: 0px; max-height: 0px;`);
-              tableArea.value?.setAttribute(
-                "style",
-                `min-height: ${minHeight}; max-height: ${maxHeight}`
-              );
-            }
+            if (!rect.height || !tableRect.height) return;
+            const salt = 15;
+            const height = rect.height + salt;
+            emptyHeight.value = tableRect.height - height + "px";
           }
         });
       },
-      { immediate: true }
+      {
+        immediate: true,
+      }
     );
 
     /**
@@ -1055,8 +1035,9 @@ export default defineComponent({
     return {
       slots,
       localTable,
-      emptyArea,
-      tableArea,
+      rootTable,
+      tableHeader,
+      emptyHeight,
       localRows,
       setting,
       rowCheckbox,
@@ -1094,7 +1075,7 @@ export default defineComponent({
 
 <template>
   <!-- eslint-disable @typescript-eslint/no-explicit-any -->
-  <div class="vtl vtl-card" :id="`${id}-root`">
+  <div class="vtl vtl-card" :id="`${id}-root`" ref="rootTable">
     <div class="vtl-card-title" v-if="title" :id="scrollId">{{ title }}</div>
     <div class="vtl-card-body">
       <div class="vtl-row">
@@ -1104,7 +1085,7 @@ export default defineComponent({
             'fixed-first-column': isFixedFirstColumn,
             'fixed-first-second-column': isFixedFirstColumn && hasCheckbox,
           }"
-          ref="tableArea"
+          :style="`min-height: ${minHeight}; max-height: ${maxHeight};`"
         >
           <div v-if="isLoading" class="vtl-loading-mask">
             <div class="vtl-loading-content">
@@ -1133,7 +1114,7 @@ export default defineComponent({
                 "
               />
             </colgroup>
-            <thead class="vtl-thead">
+            <thead class="vtl-thead" ref="tableHeader">
               <tr class="vtl-thead-tr">
                 <th v-if="hasCheckbox" class="vtl-thead-th vtl-checkbox-th">
                   <div :class="`${checkboxWrapperClass}`">
@@ -1402,6 +1383,18 @@ export default defineComponent({
                 </template>
               </tbody>
             </template>
+
+            <template v-else>
+              <tbody>
+                <tr>
+                  <td :colspan="columns.length" :style="`height: ${emptyHeight};`">
+                    <div class="vtl-empty-msg col-sm-12 text-center">
+                      {{ messages.noDataAvailable }}
+                    </div>
+                  </td>
+                </tr>
+              </tbody>
+            </template>
           </table>
         </div>
       </div>
@@ -1555,11 +1548,11 @@ export default defineComponent({
           </div>
         </template>
       </div>
-      <div class="vtl-row" ref="emptyArea" v-else>
+      <!-- <div class="vtl-row" ref="emptyArea" v-else>
         <div class="vtl-empty-msg col-sm-12 text-center">
           {{ messages.noDataAvailable }}
         </div>
-      </div>
+      </div> -->
     </div>
   </div>
   <!-- eslint-disable @typescript-eslint/no-explicit-any -->
