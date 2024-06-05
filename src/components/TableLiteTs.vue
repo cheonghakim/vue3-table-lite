@@ -946,26 +946,37 @@ export default defineComponent({
       }
     };
 
+    const setMinHeight = () => {
+      if (props.rows.length === 0) {
+        if (rootTable.value && tableHeader.value) {
+          const rect = tableHeader.value.getBoundingClientRect();
+          const tableRect = rootTable.value.getBoundingClientRect();
+
+          if (!rect.height || !tableRect.height) return;
+          const salt = 15;
+          const height = rect.height + salt;
+          emptyHeight.value = tableRect.height - height + "px";
+        } else {
+          if (props.minHeight.includes("px")) emptyHeight.value = props.minHeight;
+          else if (props.maxHeight.includes("px")) emptyHeight.value = props.maxHeight;
+        }
+      } else {
+        emptyHeight.value = "0px";
+      }
+    };
+
     const heightWatch = watch(
       () => props.rows,
       (val: any) => {
         nextTick(() => {
-          if (rootTable.value && tableHeader.value && props.rows.length === 0) {
-            const rect = tableHeader.value.getBoundingClientRect();
-            const tableRect = rootTable.value.getBoundingClientRect();
-
-            if (!rect.height || !tableRect.height) return;
-            const salt = 15;
-            const height = rect.height + salt;
-            emptyHeight.value = tableRect.height - height + "px";
-          }
+          setMinHeight();
         });
       },
       {
         immediate: true,
       }
     );
-
+    setMinHeight();
     /**
      * 組件掛載後事件 (Mounted Event)
      */
