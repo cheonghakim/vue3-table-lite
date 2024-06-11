@@ -951,14 +951,15 @@ export default defineComponent({
         if (rootTable.value && tableHeader.value) {
           const rect = tableHeader.value.getBoundingClientRect();
           const tableRect = rootTable.value.getBoundingClientRect();
-
           if (!rect.height || !tableRect.height) return;
           const salt = 15;
           const height = rect.height + salt;
           emptyHeight.value = tableRect.height - height + "px";
         } else {
-          if (props.minHeight.includes("px")) emptyHeight.value = props.minHeight;
-          else if (props.maxHeight.includes("px")) emptyHeight.value = props.maxHeight;
+          if (props.minHeight.includes("px"))
+            emptyHeight.value = parseInt(props.minHeight) - 30 + "px";
+          else if (props.maxHeight.includes("px"))
+            emptyHeight.value = parseInt(props.maxHeight) - 30 + "px";
         }
       } else {
         emptyHeight.value = "0px";
