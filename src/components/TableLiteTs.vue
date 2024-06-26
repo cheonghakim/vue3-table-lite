@@ -1050,6 +1050,7 @@ export default defineComponent({
     });
 
     return {
+      getColumnLength,
       slots,
       localTable,
       rootTable,
