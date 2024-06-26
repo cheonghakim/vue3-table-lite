@@ -275,6 +275,11 @@ export default defineComponent({
 
     ////////////////////////////////
 
+    const getColumnLength = () => {
+      if (props.hasCheckbox) return props.columns?.length;
+      else return props.columns?.length;
+    };
+
     const onRowClicked = (row: any) => {
       // 기존에 선택된 행 해제
       const root = document.querySelector(`#${props.id}-root`);
@@ -1399,7 +1404,7 @@ export default defineComponent({
             <template v-else>
               <tbody>
                 <tr>
-                  <td :colspan="columns.length" :style="`height: ${emptyHeight};`">
+                  <td :colspan="getColumnLength()" :style="`height: ${emptyHeight};`">
                     <div class="vtl-empty-msg col-sm-12 text-center">
                       {{ messages.noDataAvailable }}
                     </div>
