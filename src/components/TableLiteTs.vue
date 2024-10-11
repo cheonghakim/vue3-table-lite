@@ -260,6 +260,9 @@ export default defineComponent({
     selectedItems: {
       type: Array,
     },
+    checkAllStatus: {
+      type: Boolean,
+    },
   },
   setup(props, { emit, slots }) {
     const resizer = ref();
@@ -513,6 +516,15 @@ export default defineComponent({
     /**
      * 監聽全勾選Checkbox (Check all checkboxes for monitoring)
      */
+    const stopWatch8 = watch(
+      () => props.checkAllStatus,
+      (val) => {
+        setting.isCheckAll = val;
+      },
+      {
+        immediate: true,
+      }
+    );
     const stopWatch1 = watch(
       () => setting.isCheckAll,
       (state: boolean) => {
@@ -1052,6 +1064,7 @@ export default defineComponent({
       stopWatch5();
       stopWatch6();
       stopWatch7();
+      stopWatch8();
       heightWatch();
       window.removeEventListener("click", closeFilterLayer);
       window.removeEventListener("resize", resizeEvent);
