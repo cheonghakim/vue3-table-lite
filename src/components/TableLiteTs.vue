@@ -752,7 +752,7 @@ export default defineComponent({
       (val: any) => {
         if (Array.isArray(val)) checkModel.value = val;
 
-        if (val.length === 0) {
+        if (val?.length === 0) {
           clearChecked();
         }
       },
