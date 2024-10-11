@@ -632,7 +632,7 @@ export default defineComponent({
     /**
      * 清空畫面上所有選擇資料 (Clear all selected data on the screen)
      */
-    const clearChecked = () => {
+    const clearChecked = (callback: boolean = true) => {
       setting.isCheckAll = false;
       checkModel.value = [];
       rowCheckbox.value.forEach((val: HTMLInputElement) => {
@@ -641,7 +641,7 @@ export default defineComponent({
         }
       });
       // 回傳畫面上選上的資料 (Return the selected data on the screen)
-      emit("return-checked-rows", checkModel.value);
+      if (callback) emit("return-checked-rows", checkModel.value);
     };
 
     ////////////////////////////
@@ -753,7 +753,7 @@ export default defineComponent({
         if (Array.isArray(val)) checkModel.value = val;
 
         if (val?.length === 0) {
-          clearChecked();
+          clearChecked(false);
         }
       },
       { immediate: true }
